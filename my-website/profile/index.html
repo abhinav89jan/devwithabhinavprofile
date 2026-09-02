@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Abhinav Srivastava — Lead Engineer, .NET &amp; AI Agent Systems</title>
+<meta name="description" content="Abhinav Srivastava — Lead Engineer with 12+ years building enterprise .NET/AWS systems, now building AI agents with Microsoft Agent Framework." />
+<style>
+  :root{
+    --paper:#FAF9F4;
+    --paper-2:#F2F0E8;
+    --ink:#1B1E24;
+    --ink-soft:#4B4F58;
+    --rule:#DAD4C4;
+    --blue:#22408A;
+    --blue-soft:#3E5AAE;
+    --amber:#B8720F;
+    --max:720px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--blue); color:#fff; }
+
+  a{ color:var(--blue); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+  a:focus-visible, button:focus-visible{
+    outline:2px solid var(--blue); outline-offset:3px;
+  }
+
+  h1,h2,h3{
+    font-family:Georgia,Cambria,"Times New Roman",serif;
+    color:var(--ink);
+    margin:0;
+  }
+
+  .mono{
+    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    font-size:0.82rem;
+    letter-spacing:0.01em;
+  }
+
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:0 28px;
+  }
+  .prose{ max-width:var(--max); }
+
+  /* ---------- Header ---------- */
+  header.site{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:22px 28px;
+    max-width:1080px;
+    margin:0 auto;
+  }
+  .brand{
+    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    font-size:0.92rem;
+    color:var(--ink);
+  }
+  .brand span{ color:var(--blue); }
+  nav.site a{
+    color:var(--ink-soft);
+    margin-left:22px;
+    font-size:0.92rem;
+  }
+  nav.site a:hover{ color:var(--blue); }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    display:grid;
+    grid-template-columns:1.1fr 0.9fr;
+    gap:40px;
+    align-items:center;
+    padding:36px 0 64px;
+  }
+  .hero h1{
+    font-size:clamp(2.4rem, 5vw, 3.4rem);
+    line-height:1.08;
+    margin-bottom:14px;
+  }
+  .hero .role{
+    font-size:1.15rem;
+    color:var(--ink-soft);
+    margin-bottom:22px;
+    max-width:46ch;
+  }
+  .hero .meta{
+    color:var(--ink-soft);
+    font-size:0.94rem;
+    margin-bottom:26px;
+  }
+  .hero .meta .sep{ color:var(--rule); margin:0 8px; }
+
+  .cta-row{ display:flex; flex-wrap:wrap; gap:12px; }
+  .btn{
+    display:inline-block;
+    padding:10px 18px;
+    border:1px solid var(--ink);
+    border-radius:2px;
+    font-size:0.92rem;
+    color:var(--ink);
+  }
+  .btn:hover{ background:var(--ink); color:var(--paper); text-decoration:none; }
+  .btn.primary{
+    background:var(--blue);
+    border-color:var(--blue);
+    color:#fff;
+  }
+  .btn.primary:hover{ background:var(--blue-soft); border-color:var(--blue-soft); }
+
+  .diagram-wrap{ width:100%; }
+  .diagram-wrap svg{ width:100%; height:auto; display:block; }
+  .diagram-cap{
+    margin-top:10px;
+    color:var(--ink-soft);
+    font-size:0.78rem;
+    text-align:center;
+  }
+
+  .draw{
+    stroke-dasharray:340;
+    stroke-dashoffset:340;
+    animation:draw 1.6s ease forwards;
+  }
+  @keyframes draw{ to{ stroke-dashoffset:0; } }
+  .fade{
+    opacity:0;
+    animation:fadeIn 0.6s ease forwards;
+  }
+  @keyframes fadeIn{ to{ opacity:1; } }
+  @media (prefers-reduced-motion: reduce){
+    .draw{ animation:none; stroke-dashoffset:0; }
+    .fade{ animation:none; opacity:1; }
+  }
+
+  /* ---------- Section framing ---------- */
+  section{ padding:50px 0; border-top:1px solid var(--rule); }
+  section:first-of-type{ border-top:none; }
+  .section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:20px;
+    margin-bottom:28px;
+  }
+  .section-head h2{ font-size:1.5rem; }
+  .section-head .tag{ color:var(--ink-soft); }
+
+  p{ color:var(--ink-soft); margin:0 0 14px; }
+  .prose p:last-child{ margin-bottom:0; }
+
+  /* ---------- Timeline ---------- */
+  .timeline{ position:relative; padding-left:26px; }
+  .timeline::before{
+    content:"";
+    position:absolute; left:5px; top:6px; bottom:6px;
+    width:1px; background:var(--rule);
+  }
+  .tl-item{ position:relative; padding-bottom:34px; }
+  .tl-item:last-child{ padding-bottom:0; }
+  .tl-item::before{
+    content:"";
+    position:absolute; left:-26px; top:6px;
+    width:9px; height:9px; border-radius:50%;
+    background:var(--paper); border:2px solid var(--blue);
+  }
+  .tl-item h3{ font-size:1.08rem; margin-bottom:2px; }
+  .tl-item .company{ color:var(--blue); font-weight:600; }
+  .tl-item .dates{
+    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    font-size:0.78rem;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+    display:block;
+  }
+  .tl-item p{ max-width:64ch; }
+  .tl-item ul{
+    margin:10px 0 0;
+    padding-left:18px;
+    color:var(--ink-soft);
+  }
+  .tl-item li{ margin-bottom:6px; max-width:62ch; }
+  .tl-item .tech{
+    margin-top:10px;
+    font-size:0.78rem;
+    color:var(--ink-soft);
+  }
+  .tl-item .tech em{ font-style:normal; color:var(--ink); }
+
+  /* ---------- Project ---------- */
+  .project-block{
+    border:1px solid var(--rule);
+    padding:26px 28px;
+    background:var(--paper-2);
+  }
+  .project-block h3{ font-size:1.2rem; margin-bottom:6px; }
+  .project-block .status{
+    display:inline-block;
+    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    font-size:0.72rem;
+    color:var(--amber);
+    border:1px solid var(--amber);
+    padding:2px 8px;
+    border-radius:2px;
+    margin-bottom:14px;
+  }
+  .project-block ul{
+    margin:14px 0 0; padding-left:18px; color:var(--ink-soft);
+  }
+  .project-block li{ margin-bottom:8px; max-width:66ch; }
+  .project-block li strong{ color:var(--ink); font-weight:600; }
+  .project-block li code{
+    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    font-size:0.85em;
+    background:var(--paper);
+    border:1px solid var(--rule);
+    padding:1px 5px;
+    border-radius:2px;
+    color:var(--ink);
+  }
+
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+  .chip{
+    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    font-size:0.74rem;
+    color:var(--blue);
+    border:1px solid var(--blue);
+    border-radius:2px;
+    padding:3px 8px;
+    background:transparent;
+  }
+
+  /* ---------- Skills ---------- */
+  .skill-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    gap:24px;
+  }
+  .skill-cat h3{
+    font-size:0.78rem;
+    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    color:var(--ink-soft);
+    font-weight:400;
+    margin-bottom:10px;
+    text-transform:lowercase;
+  }
+  .skill-cat .chips{ margin-top:0; }
+  .skill-cat .chip{ color:var(--ink); border-color:var(--rule); }
+
+  /* ---------- Contact / footer ---------- */
+  .contact-row{
+    display:flex; flex-wrap:wrap; gap:14px 28px; margin-top:10px;
+  }
+  .contact-row a{ color:var(--ink); }
+  .contact-row a:hover{ color:var(--blue); }
+
+  footer{
+    padding:30px 0 50px;
+    color:var(--ink-soft);
+    font-size:0.8rem;
+  }
+
+  @media (max-width: 760px){
+    .hero{ grid-template-columns:1fr; padding-top:20px; }
+    .hero .diagram-wrap{ order:-1; max-width:340px; margin:0 auto 8px; }
+    header.site{ flex-direction:column; gap:10px; align-items:flex-start; }
+    nav.site a{ margin-left:0; margin-right:18px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="brand">Dev<span>With</span>Abhinav</div>
+  <nav class="site">
+    <a href="#work">Experience</a>
+    <a href="#ai">AI Engineering</a>
+    <a href="#skills">Skills</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <section class="hero" style="border-top:none;">
+    <div>
+      <h1>Abhinav Srivastava</h1>
+      <p class="role">Lead Engineer building enterprise .NET &amp; AWS systems for 12+ years — now building the AI agents that run inside them.</p>
+      <p class="meta">
+ 	<p>C#, ASP.NET Core, Reactjs, AWS, Azure</p>
+        <p>Microsoft Agent Framework</p>
+	<p>Gurugram, India <span class="sep">·</span> Remote</p>
+      </p>
+      <div class="cta-row">
+        <a class="btn primary" href="mailto:devwithabhinav@gmail.com">Email me</a>
+        <a class="btn" href="https://www.linkedin.com/in/abhinav-srivastava-27aaa072/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </div>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 380 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of an AI agent workflow: request goes to an agent, which uses RAG, tools, and MCP, then returns a response.">
+        <!-- nodes -->
+        <g fill="none" stroke="#22408A" stroke-width="1.4">
+          <rect x="150" y="10" width="80" height="34" rx="3" class="draw"/>
+          <rect x="150" y="120" width="80" height="40" rx="3" class="draw" style="animation-delay:.15s"/>
+          <rect x="20" y="220" width="80" height="36" rx="3" class="draw" style="animation-delay:.3s"/>
+          <rect x="150" y="220" width="80" height="36" rx="3" class="draw" style="animation-delay:.4s"/>
+          <rect x="280" y="220" width="80" height="36" rx="3" class="draw" style="animation-delay:.5s"/>
+          <rect x="150" y="70" width="80" height="34" rx="3" class="draw" style="animation-delay:.1s" stroke-dasharray="228" stroke-dashoffset="228"/>
+        </g>
+        <g stroke="#8A93A6" stroke-width="1">
+          <line x1="190" y1="44" x2="190" y2="70" class="draw" style="animation-delay:.5s"/>
+          <line x1="190" y1="104" x2="190" y2="120" class="draw" style="animation-delay:.6s"/>
+          <line x1="190" y1="160" x2="60" y2="220" class="draw" style="animation-delay:.7s"/>
+          <line x1="190" y1="160" x2="190" y2="220" class="draw" style="animation-delay:.75s"/>
+          <line x1="190" y1="160" x2="320" y2="220" class="draw" style="animation-delay:.8s"/>
+        </g>
+        <g font-family="SFMono-Regular,Consolas,Menlo,monospace" font-size="11" fill="#1B1E24" class="fade" style="animation-delay:1s;">
+          <text x="190" y="31" text-anchor="middle">request</text>
+          <text x="190" y="91" text-anchor="middle" fill="#4B4F58" font-size="9">IChatClient</text>
+          <text x="190" y="144" text-anchor="middle">agent (MAF)</text>
+          <text x="60" y="242" text-anchor="middle">RAG</text>
+          <text x="190" y="242" text-anchor="middle">tools</text>
+          <text x="320" y="242" text-anchor="middle">MCP</text>
+        </g>
+      </svg>
+      <p class="diagram-cap mono">a request moving through an agent — the shape I've been building in Microsoft Agent Framework</p>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="section-head">
+      <h2>About</h2>
+    </div>
+    <div class="prose">
+      <p>I've spent 12+ years as a backend and full-stack engineer, mostly on the .NET side — architecting microservices, leading teams, and shipping systems on AWS that businesses actually depend on. Lately I've been pointing that same engineering discipline at a newer problem: building AI agents that are reliable enough for production, not just a demo.</p>
+      <p>I'm currently a Lead Engineer at Teleperformance, working fully remote from Gurugram, India, and building out an AI-agent engineering practice on the side using Microsoft's Agent Framework — tool-calling, retrieval-augmented generation, multi-agent workflows, and the production discipline (tracing, evals, containerized deployment) that most tutorials skip.</p>
+    </div>
+  </section>
+
+  <section id="work">
+    <div class="section-head">
+      <h2>Experience</h2>
+      <span class="tag mono">2013 — present</span>
+    </div>
+    <div class="timeline">
+      <div class="tl-item">
+        <h3>Lead Engineer (Full Stack)</h3>
+        <span class="company">Teleperformance</span>
+        <span class="dates">June 2025 — present</span>
+        <p>Building enterprise-level applications for a global digital business-services provider, focused on operational efficiency and customer experience.</p>
+        <ul>
+          <li>Implemented CI/CD pipelines (GitHub Actions) automating testing and deployment to Dockerized services on AWS EC2, cutting manual release effort and reducing deployment turnaround time.</li>
+          <li>Led code reviews and coding-standard enforcement across the team, improving system maintainability and reducing recurring defects.</li>
+          <li>Built reactive data-visualization components in AngularJS that improved reporting usability for business stakeholders.</li>
+          <li>Mentored junior developers through pair programming and structured code review, improving team delivery consistency.</li>
+          <li>Partnered with product management to prioritize the feature roadmap based on customer feedback and business goals.</li>
+          <li>Tuned SQL Server queries and indexing strategy to keep response times stable as dataset volume grew.</li>
+        </ul>
+        <p class="tech"><em>Technologies:</em> C#, ASP.NET Core, .NET 7/8, AngularJS, SQL Server, GitHub CI/CD, Docker</p>
+      </div>
+      <div class="tl-item">
+        <h3>Senior Software Engineer (Full Stack)</h3>
+        <span class="company">AlsoEnergy (a STEM company)</span>
+        <span class="dates">Oct 2021 — Apr 2025</span>
+        <p>Led development of mission-critical energy-monitoring applications on AWS, supporting solar production visualization and customer onboarding for a growing customer base.</p>
+        <ul>
+          <li>Architected scalable microservices on ASP.NET Core and AWS (EKS, API Gateway, S3), enabling both vertical and horizontal scaling as the customer base grew.</li>
+          <li>Built two parallel applications — a monolithic ingestion service ("IngestApp") and a newer microservices-based platform ("Skybridge") — demonstrating range across both architectural styles.</li>
+          <li>Designed a shared SSO authentication service used by both IngestApp and Skybridge, reducing duplicated auth logic across the platform.</li>
+          <li>Built XML/CSV transformation pipelines used by both applications to normalize third-party data feeds into a common internal format.</li>
+          <li>Implemented GitLab CI/CD pipelines automating test and deployment to Docker containers on AWS EC2.</li>
+          <li>Led REST API development integrating multiple third-party data sources into the platform.</li>
+          <li>Engineered scheduled data-processing workflows with Quartz Job Scheduler, improving reliability of recurring data jobs.</li>
+          <li>Collaborated with distributed, cross-timezone teams to keep delivery on schedule.</li>
+        </ul>
+        <p class="tech"><em>Technologies:</em> C#, .NET 7/8, ReactJS, SQL Server, MySQL, Entity Framework, LINQ, GitLab CI/CD, Docker, AWS EC2/EKS/S3, Quartz</p>
+      </div>
+      <div class="tl-item">
+        <h3>Lead Engineer (Full Stack)</h3>
+        <span class="company">FullCycle — Izenda Product</span>
+        <span class="dates">Jul 2019 — Sep 2021</span>
+        <p>Led development on Izenda's business-intelligence product, enabling data visualization and reporting on top of customers' existing databases.</p>
+        <ul>
+          <li>Directed technical strategy for the BI platform, translating business requirements into concrete technical specifications.</li>
+          <li>Led design of an extensible API architecture on ASP.NET Core that enabled seamless third-party integrations.</li>
+          <li>Built reactive data-visualization components in ReactJS that improved the reporting experience for end users.</li>
+          <li>Mentored junior engineers through code review and pair programming.</li>
+          <li>Worked with product management to prioritize features based on customer feedback.</li>
+        </ul>
+        <p class="tech"><em>Technologies:</em> C#, ASP.NET Core, ReactJS, SQL Server, Entity Framework, LINQ, GitLab</p>
+      </div>
+      <div class="tl-item">
+        <h3>Lead Engineer</h3>
+        <span class="company">KelltonTech</span>
+        <span class="dates">Jan 2016 — Jun 2019</span>
+        <p>Led modernization of FOXTONS, a legacy real-estate platform, onto current technologies and engineering practices.</p>
+        <ul>
+          <li>Led migration of a legacy codebase to modern ASP.NET Core MVC architecture.</li>
+          <li>Implemented responsive design patterns, improving cross-platform/browser compatibility.</li>
+          <li>Optimized Entity Framework/LINQ queries, improving page load and query performance.</li>
+          <li>Authored technical documentation that streamlined knowledge transfer across the team.</li>
+          <li>Worked with product owners to refine requirements and set the technical roadmap.</li>
+        </ul>
+        <p class="tech"><em>Technologies:</em> C#, ASP.NET Core MVC, JavaScript, SQL Server, Entity Framework, LINQ</p>
+      </div>
+      <div class="tl-item">
+        <h3>Software Engineer</h3>
+        <span class="company">Omni-Net Technologies</span>
+        <span class="dates">Dec 2013 — Dec 2015</span>
+        <p>Built result-processing applications for CSJM University Kanpur and Bundelkhand University, covering Medical, Para-Medical, Technical, and Regular academic programs.</p>
+        <ul>
+          <li>Built an end-to-end result-processing system supporting multiple academic program types.</li>
+          <li>Implemented secure data-processing workflows with validation and structured error handling.</li>
+          <li>Designed intuitive UIs that simplified complex data-entry and result-processing tasks.</li>
+          <li>Built custom reporting modules generating official student result documents.</li>
+          <li>Worked directly with university stakeholders to ensure compliance with academic regulations.</li>
+        </ul>
+        <p class="tech"><em>Technologies:</em> C#, ASP.NET, ADO.NET, MVC, WPF, JavaScript, SQL Server, Entity Framework, LINQ</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="ai">
+    <div class="section-head">
+      <h2>AI Engineering</h2>
+    </div>
+    <div class="project-block">
+      <span class="status">in progress · phase 6 of 7</span>
+      <h3>Agentic .NET Assistant</h3>
+      <p>A structured, phase-by-phase build covering the full AI agent lifecycle in .NET — from a raw LLM call to a production-shaped agent service — using Microsoft Agent Framework (MAF). Runs on the Gemini API via a community IChatClient adapter, so the whole build needs no Azure or OpenAI subscription.</p>
+      <ul>
+        <li><strong>Foundations —</strong> a console app calling <code>IChatClient.GetResponseAsync</code> directly against Gemini with token-by-token streaming, before bringing in any framework, to understand the raw mechanics first.</li>
+        <li><strong>Core agent skills —</strong> <code>AIAgent</code> instances with custom C# tool methods (function/tool calling), structured JSON output deserialized into typed C# records, and multi-turn history via MAF's session/thread abstraction.</li>
+        <li><strong>MAF architecture —</strong> refactored into a DI-registered service inside ASP.NET Core behind a <code>/chat</code> endpoint, with middleware logging every tool call and token count, and sessions persisted to SQLite so conversations survive a restart.</li>
+        <li><strong>RAG —</strong> documents ingested into a vector store, a <code>TextSearchProvider</code> context provider grounding answers in retrieved passages, with inline citations back to source documents.</li>
+        <li><strong>Multi-agent workflows —</strong> a researcher/writer pipeline wired as an explicit MAF workflow graph, with a human-in-the-loop approval gate before any irreversible action.</li>
+        <li><strong>Tool ecosystem &amp; security —</strong> tools sourced from an external Model Context Protocol (MCP) server instead of hand-rolled integrations, with input validation and least-privilege scoping against prompt-injection risk.</li>
+        <li><strong>Production engineering (current phase) —</strong> OpenTelemetry tracing via Jaeger/.NET Aspire, a 10–20 prompt evaluation suite, and a multi-stage Dockerfile with secrets injected via environment variables.</li>
+      </ul>
+      <div class="chips">
+        <span class="chip">C#</span>
+        <span class="chip">ASP.NET Core</span>
+        <span class="chip">Microsoft Agent Framework</span>
+        <span class="chip">Microsoft.Extensions.AI</span>
+        <span class="chip">RAG</span>
+        <span class="chip">MCP</span>
+        <span class="chip">Docker</span>
+      </div>
+      <p style="margin-top:16px;">
+        <a href="https://github.com/devwithabhinav/AIEngineeringWithDotNet" target="_blank" rel="noopener">View the repository on GitHub</a>
+      </p>
+    </div>
+  </section>
+
+  <section id="skills">
+    <div class="section-head">
+      <h2>Skills</h2>
+    </div>
+    <div class="skill-grid">
+  <div class="skill-cat">
+    <h3>languages &amp; frameworks</h3>
+    <div class="chips">
+      <span class="chip">C#</span>
+      <span class="chip">ASP.NET Core</span>
+      <span class="chip">.NET 7/8</span>
+      <span class="chip">.NET Framework 4.8</span>
+      <span class="chip">MVC</span>
+      <span class="chip">REST APIs</span>
+	<span class="chip">GRPC</span>
+      <span class="chip">Microservices</span>
+      <span class="chip">Entity Framework</span>
+      <span class="chip">LINQ</span>
+      <span class="chip">ADO.NET</span>
+      <span class="chip">Quartz Job Scheduler</span>
+    </div>
+  </div>
+
+  <div class="skill-cat">
+    <h3>frontend</h3>
+    <div class="chips">
+      <span class="chip">JavaScript</span>
+      <span class="chip">ReactJS</span>
+      <span class="chip">AngularJS</span>
+      <span class="chip">VueJS</span>
+    </div>
+  </div>
+
+  <div class="skill-cat">
+    <h3>cloud &amp; devops</h3>
+    <div class="chips">
+      <span class="chip">AWS (EC2, EKS, Lambda, RDS, DocumentDB, API Gateway, S3, CloudWatch)</span>
+      <span class="chip">Azure</span>
+ 	<span class="chip">Docker</span>
+      <span class="chip">Kubernetes</span>
+      <span class="chip">GitHub Actions</span>
+      <span class="chip">GitLab CI/CD</span>
+    </div>
+  </div>
+
+  <div class="skill-cat">
+    <h3>databases</h3>
+    <div class="chips">
+      <span class="chip">SQL Server</span>
+      <span class="chip">MySQL</span>
+      <span class="chip">PostgreSQL</span>
+      <span class="chip">Oracle</span>
+      <span class="chip">Redis Cache</span>
+    </div>
+  </div>
+
+  <div class="skill-cat">
+    <h3>observability</h3>
+    <div class="chips">
+      <span class="chip">OpenTelemetry</span>
+      <span class="chip">Kibana</span>
+      <span class="chip">Datadog</span>
+      <span class="chip">Grafana</span>
+      <span class="chip">Chronograph</span>
+    </div>
+  </div>
+
+<div class="skill-cat">
+    <h3>ai engineering</h3>
+    <div class="chips">
+      <span class="chip">Microsoft Agent Framework (MAF)</span>
+      <span class="chip">Microsoft.Extensions.AI (IChatClient)</span>
+      <span class="chip">Agent Tool-Calling</span>
+      <span class="chip">RAG</span>
+      <span class="chip">Vector Search</span>
+      <span class="chip">Multi-Agent Workflows</span>
+      <span class="chip">MCP</span>
+      <span class="chip">Prompt Engineering</span>
+      <span class="chip">LLM Structured Output</span>
+    </div>
+  </div>
+</div>
+  </section>
+
+  <section id="contact">
+    <div class="section-head">
+      <h2>Get in touch</h2>
+    </div>
+    <p class="prose">Open to senior/lead remote roles and select freelance projects — especially where enterprise .NET meets AI agent engineering.</p>
+    <div class="contact-row mono">
+      <a href="mailto:devwithabhinav@gmail.com">devwithabhinav@gmail.com</a>
+      <a href="https://www.linkedin.com/in/abhinav-srivastava-27aaa072/" target="_blank" rel="noopener">linkedin.com/in/abhinav-srivastava</a>
+      <a href="https://github.com/devwithabhinav" target="_blank" rel="noopener">github.com/devwithabhinav</a>
+      <span>Gurugram, India</span>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="mono">devwithabhinav.in &nbsp;·&nbsp; built by Abhinav Srivastava</div>
+  </div>
+</footer>
+
+</body>
+</html>
