@@ -1,877 +1,750 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AI System Design &amp; SDLC — Abhinav Srivastava</title>
-<meta name="description" content="A Principal Architect's playbook for taking AI/LLM systems from discovery to steady-state operations — 7 phases, from feasibility to observability." />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI System Design &amp; SDLC — Redesign Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --paper:#FAF9F4;
-    --paper-2:#F2F0E8;
-    --ink:#1B1E24;
-    --ink-soft:#4B4F58;
-    --rule:#DAD4C4;
-    --blue:#22408A;
-    --blue-soft:#3E5AAE;
-    --amber:#B8720F;
-    --green:#2F6E45;
-    --max:720px;
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --paper: #F3F4F0;
+    --paper-raised: #FFFFFE;
+    --grid-line: #DEDDD2;
+    --rule: #C9C7BA;
+    --ink: #1A2333;
+    --body: #333B4A;
+    --muted: #6B7280;
+    --signal: #0E6E77;
+    --signal-ink: #0A5259;
+    --warn: #A34A08;
+    --warn-bg: #FBF0E4;
+    --signal-bg: #E7F1F0;
+    --chip-bg: #ECEAE0;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
   }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    background:var(--paper);
-    color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    line-height:1.6;
-    -webkit-font-smoothing:antialiased;
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --paper: #12161D; --paper-raised: #171C24; --grid-line: #232A35; --rule: #2B323F;
+      --ink: #EDEFF3; --body: #C6CCD6; --muted: #8892A0; --signal: #35B7B0; --signal-ink: #6ED4CD;
+      --warn: #E08A3F; --warn-bg: #241C13; --signal-bg: #12262A; --chip-bg: #1D222B;
+    }
   }
-  ::selection{ background:var(--blue); color:#fff; }
-  a{ color:var(--blue); text-decoration:none; }
-  a:hover{ text-decoration:underline; }
-  a:focus-visible, summary:focus-visible{ outline:2px solid var(--blue); outline-offset:3px; }
+  :root[data-theme="dark"] {
+    --paper: #12161D; --paper-raised: #171C24; --grid-line: #232A35; --rule: #2B323F;
+    --ink: #EDEFF3; --body: #C6CCD6; --muted: #8892A0; --signal: #35B7B0; --signal-ink: #6ED4CD;
+    --warn: #E08A3F; --warn-bg: #241C13; --signal-bg: #12262A; --chip-bg: #1D222B;
+  }
+  html { scroll-padding-top: 70px; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      linear-gradient(var(--paper), var(--paper)),
+      repeating-linear-gradient(0deg, var(--grid-line) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(90deg, var(--grid-line) 0 1px, transparent 1px 40px);
+    background-color: var(--paper);
+    color: var(--body);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--signal-ink); }
 
-  h1,h2,h3{ font-family:Georgia,Cambria,"Times New Roman",serif; color:var(--ink); margin:0; }
+  .topbar {
+    position: sticky; top: 0; top: env(safe-area-inset-top, 0px); z-index: 30;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px 24px; padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule);
+  }
+  .brand { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--ink);
+    display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .brand .mark { width: 18px; height: 18px; border: 1.5px solid var(--ink); display: grid; place-items: center; font-size: 10px; font-family: var(--font-mono); flex-shrink: 0; }
+  .mockup-tag { font-family: var(--font-mono); font-size: 11px; color: var(--warn); border: 1px solid var(--warn); padding: 3px 8px; border-radius: 3px; white-space: nowrap; }
 
-  .mono{
-    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-    font-size:0.82rem;
+  .shell { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 76px minmax(0,1fr); }
+  .rail {
+    padding: 48px 0 40px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    border-right: 1px solid var(--rule); position: sticky; top: 64px; align-self: start;
+    max-height: calc(100vh - 64px); overflow-y: auto;
   }
-  code{
-    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-    font-size:0.85em;
-    background:var(--paper-2);
-    border:1px solid var(--rule);
-    padding:1px 5px;
-    border-radius:2px;
-    color:var(--ink);
-  }
+  .rail a { text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 0; }
+  .rail .lbl { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+  .rail a.active .lbl { color: var(--signal-ink); font-weight: 500; }
+  .rail .dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--rule); background: transparent; }
+  .rail a.active .dot { background: var(--signal); border-color: var(--signal); width: 10px; height: 10px; }
+  .rail .cs-mk { width: 8px; height: 8px; border: 1.5px solid var(--rule); background: transparent; }
+  .rail a.active .cs-mk { background: var(--warn); border-color: var(--warn); }
+  .rail .track { width: 1px; flex: none; height: 14px; background: var(--rule); }
 
-  .wrap{ max-width:900px; margin:0 auto; padding:0 28px; }
-  .prose{ max-width:var(--max); }
-  p{ color:var(--ink-soft); margin:0 0 14px; }
+  main { padding: 0 32px 40px; min-width: 0; }
+  .col { max-width: 700px; margin: 0 auto; }
 
-  header.site{
-    display:flex; justify-content:space-between; align-items:center;
-    padding:22px 28px; max-width:900px; margin:0 auto;
-  }
-  .brand{
-    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-    font-size:0.92rem; color:var(--ink);
-  }
-  .brand span{ color:var(--blue); }
-  header.site nav a{ color:var(--ink-soft); font-size:0.9rem; }
-  header.site nav a:hover{ color:var(--blue); }
+  section.phase { padding-top: 64px; scroll-margin-top: 64px; }
+  section.phase:first-of-type { padding-top: 48px; }
 
-  .hero{ padding:20px 0 40px; border-bottom:1px solid var(--rule); }
-  .hero h1{ font-size:clamp(1.8rem, 4vw, 2.5rem); line-height:1.18; margin-bottom:14px; }
-  .hero .lede{ font-size:1.05rem; color:var(--ink-soft); max-width:66ch; margin-bottom:18px; font-style:italic; }
-  .hero .meta-line{ font-size:0.86rem; color:var(--ink-soft); }
+  .eyebrow-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+  .phase-ghost { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--signal); }
+  .phase-ghost.cs { color: var(--warn); }
+  h1.title { font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 3.6vw, 38px); line-height: 1.14; color: var(--ink); margin: 0 0 16px; max-width: 15ch; letter-spacing: -0.01em; }
+  .lede { font-size: 18.5px; line-height: 1.6; color: var(--body); margin: 0 0 26px; max-width: 62ch; }
 
-  .callout{
-    background:var(--paper-2);
-    border:1px solid var(--rule);
-    border-left:3px solid var(--blue);
-    padding:16px 20px;
-    margin:24px 0;
-    font-size:0.92rem;
-  }
-  .callout p{ margin:0 0 8px; }
-  .callout p:last-child{ margin-bottom:0; }
-  .callout strong{ color:var(--ink); }
-  .callout ol{ margin:6px 0 0; padding-left:20px; color:var(--ink-soft); }
-  .callout li{ margin-bottom:4px; }
+  .gist { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: flex-start; padding: 18px 20px; background: var(--signal-bg); border: 1px solid color-mix(in srgb, var(--signal) 35%, var(--rule)); border-radius: 2px; margin-bottom: 38px; }
+  .gist-label { font-family: var(--font-mono); font-size: 11px; color: var(--signal-ink); flex-basis: 100%; margin-bottom: 2px; }
+  .gist-line { font-family: var(--font-body); font-style: italic; font-size: 16px; color: var(--ink); flex: 1 1 260px; margin: 0; }
+  .stat-row { display: flex; gap: 22px; flex-wrap: wrap; }
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+  .stat b { font-family: var(--font-display); font-size: 19px; color: var(--ink); }
+  .stat span { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
 
-  section.phases{ padding:44px 0; }
-  .section-head{
-    display:flex; justify-content:space-between; align-items:baseline;
-    margin-bottom:24px; gap:16px;
-  }
-  .section-head h2{ font-size:1.4rem; }
+  h2.section { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.02em; color: var(--muted); display: flex; align-items: center; gap: 12px; margin: 48px 0 18px; }
+  h2.section::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
 
-  .phase{
-    border:1px solid var(--rule);
-    background:var(--paper-2);
-    margin-bottom:14px;
-    padding:0;
-  }
-  .phase[open]{ background:#fff; }
-  .phase summary{
-    list-style:none;
-    cursor:pointer;
-    padding:18px 22px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:16px;
-  }
-  .phase summary::-webkit-details-marker{ display:none; }
-  .phase-head{ display:flex; flex-direction:column; gap:3px; }
-  .phase-num{
-    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-    font-size:0.76rem; color:var(--blue);
-  }
-  .phase-title{ font-family:Georgia,Cambria,serif; font-size:1.12rem; color:var(--ink); }
-  .toggle-label{
-    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-    font-size:0.76rem; color:var(--blue); white-space:nowrap; flex-shrink:0;
-  }
-  .phase[open] .toggle-label .show-more{ display:none; }
-  .phase:not([open]) .toggle-label .show-less{ display:none; }
+  p { margin: 0 0 16px; max-width: 66ch; }
+  strong { color: var(--ink); font-weight: 600; }
 
-  .phase-teaser{ padding:0 22px 18px; margin-top:-8px; }
-  .phase-teaser p{ margin:0; font-size:0.92rem; }
-  .phase[open] .phase-teaser{ display:none; }
+  .card { border-left: 3px solid var(--signal); padding: 2px 0 2px 20px; margin: 0 0 22px; }
+  .card h3 { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--ink); margin: 0 0 6px; }
+  .card p { margin-bottom: 0; font-size: 15.5px; }
 
-  .phase-body{ padding:4px 22px 26px; border-top:1px solid var(--rule); }
-  .phase-body h4{
-    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-    font-size:0.76rem; text-transform:lowercase; color:var(--ink-soft);
-    margin:22px 0 10px; letter-spacing:0.02em;
-  }
-  .phase-body h4:first-child{ margin-top:18px; }
-  .phase-body ul{ margin:0; padding-left:18px; color:var(--ink-soft); }
-  .phase-body li{ margin-bottom:9px; max-width:72ch; }
-  .phase-body li strong{ color:var(--ink); font-weight:600; }
-  .phase-body p{ font-size:0.94rem; max-width:72ch; }
+  figure.diagram { margin: 30px 0 36px; border: 1px solid var(--rule); background: var(--paper-raised); border-radius: 2px; overflow: hidden; }
+  figure.diagram .fig-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--rule); font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+  figure.diagram svg { display: block; width: 100%; height: auto; }
+  figcaption { padding: 12px 16px 16px; font-size: 13.5px; color: var(--muted); font-style: italic; }
 
-  .trade-off{
-    background:var(--paper);
-    border:1px solid var(--rule);
-    border-left:3px solid var(--amber);
-    padding:10px 14px;
-    margin-bottom:10px;
-    font-size:0.9rem;
-  }
-  .trade-off strong{ color:var(--ink); }
+  .tool-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 6px; }
+  .tool-item { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+  .tool-chip { font-family: var(--font-mono); font-size: 12px; color: var(--signal-ink); background: var(--chip-bg); padding: 3px 9px; border-radius: 3px; white-space: nowrap; flex-shrink: 0; }
+  .tool-item p { margin: 0; font-size: 15px; }
 
-  .phase-figure{
-    margin:18px 0 24px;
-    border:1px solid var(--rule);
-    background:#fff;
-    padding:10px;
-  }
-  .phase-figure img{ width:100%; height:auto; display:block; }
-  .phase-figure figcaption{
-    margin-top:8px;
-    font-size:0.78rem;
-    color:var(--ink-soft);
-    text-align:center;
-  }
-  .phase-body .lede-block{
-    font-size:0.95rem;
-    color:var(--ink-soft);
-    max-width:74ch;
-    margin:0 0 6px;
-  }
+  .warn-card { border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--rule)); background: var(--warn-bg); border-radius: 2px; padding: 16px 20px; margin-bottom: 16px; }
+  .warn-card h3 { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; color: var(--warn); margin: 0 0 6px; display: flex; align-items: center; gap: 8px; }
+  .warn-card h3 .mk { width: 6px; height: 6px; background: var(--warn); border-radius: 50%; flex-shrink: 0; }
+  .warn-card p { margin: 0; font-size: 15px; }
 
-  /* Capstone */
-  .capstone{ padding:44px 0; border-top:1px solid var(--rule); }
-  .capstone-list{ margin:0; padding-left:0; list-style:none; }
-  .capstone-list li{
-    margin-bottom:14px;
-    padding-left:0;
-    color:var(--ink-soft);
-    font-size:0.94rem;
-    max-width:76ch;
-  }
-  .capstone-list li strong{ color:var(--blue); font-family:"SFMono-Regular",Consolas,monospace; font-size:0.82rem; }
+  .throughline { margin: 30px 0 0; padding: 16px 20px; border-top: 1px dashed var(--rule); border-bottom: 1px dashed var(--rule); font-size: 15px; font-style: italic; color: var(--muted); }
 
-  .diagram-scroll{
-    overflow-x:auto;
-    border:1px solid var(--rule);
-    background:#fff;
-    padding:18px;
-    margin:20px 0;
-  }
-  .diagram-scroll pre{
-    margin:0;
-    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-    font-size:0.72rem;
-    line-height:1.4;
-    color:var(--ink);
-    white-space:pre;
-  }
-  .diagram-cap{ font-size:0.8rem; color:var(--ink-soft); margin-top:-6px; }
+  .phase-end { margin-top: 44px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .phase-end .next { font-family: var(--font-mono); font-size: 12.5px; }
 
-  footer{ padding:30px 0 50px; color:var(--ink-soft); font-size:0.8rem; border-top:1px solid var(--rule); }
+  /* capstone specific */
+  .cs-map { display: grid; grid-template-columns: 56px 1fr; gap: 4px 16px; margin: 8px 0 30px; }
+  .cs-map .p { font-family: var(--font-mono); font-size: 12px; color: var(--warn); padding-top: 3px; }
+  .cs-map .d { font-size: 15px; padding-bottom: 14px; border-bottom: 1px solid var(--grid-line); margin-bottom: 4px; }
+  .cs-map .d strong { color: var(--ink); }
 
-  @media (max-width: 620px){
-    .phase summary{ align-items:flex-start; }
+  .schematic { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 2px; overflow-x: auto; margin: 30px 0 36px; }
+  .schematic .fig-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--rule); font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+  .schematic pre { font-family: var(--font-mono); font-size: 11.5px; line-height: 1.5; color: var(--body); padding: 20px 24px; margin: 0; white-space: pre; }
+  .schematic .cap { padding: 4px 16px 16px; font-size: 13.5px; color: var(--muted); font-style: italic; }
+
+  footer.pagefoot { max-width: 700px; margin: 60px auto 0; padding: 24px 0 60px; border-top: 1px solid var(--rule); font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); text-align: center; }
+
+  /* author credibility strip */
+  .author-strip { max-width: 1120px; margin: 0 auto; padding: 18px 32px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .author-strip .avatar { width: 40px; height: 40px; border: 1.5px solid var(--ink); border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--ink); flex-shrink: 0; background: var(--paper-raised); }
+  .author-strip .who { display: flex; flex-direction: column; gap: 1px; margin-right: auto; }
+  .author-strip .who .name { font-family: var(--font-display); font-weight: 600; font-size: 14.5px; color: var(--ink); }
+  .author-strip .who .role { font-family: var(--font-body); font-style: italic; font-size: 13.5px; color: var(--muted); }
+  .author-strip .links { display: flex; gap: 8px; flex-wrap: wrap; }
+  .author-strip .links a { font-family: var(--font-mono); font-size: 11.5px; color: var(--signal-ink); background: var(--chip-bg); padding: 4px 10px; border-radius: 3px; text-decoration: none; white-space: nowrap; }
+  .author-strip .links a:hover { background: var(--signal-bg); }
+  @media (max-width: 720px) { .author-strip { padding: 14px 16px; } .author-strip .who .role { display: none; } }
+
+  /* closing CTA */
+  .cta-block { max-width: 700px; margin: 48px auto 0; padding: 32px 28px; border: 1px solid var(--rule); background: var(--paper-raised); border-radius: 2px; position: relative; }
+  .cta-block::before { content: ""; position: absolute; top: -1px; left: 24px; width: 34px; height: 3px; background: var(--signal); }
+  .cta-block .cta-eyebrow { font-family: var(--font-mono); font-size: 11px; color: var(--signal-ink); margin-bottom: 10px; }
+  .cta-block h3 { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--ink); margin: 0 0 10px; }
+  .cta-block p { font-size: 15.5px; margin-bottom: 20px; max-width: 56ch; }
+  .cta-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .cta-row a.primary { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--paper); background: var(--signal); padding: 10px 18px; border-radius: 3px; text-decoration: none; }
+  .cta-row a.secondary { font-family: var(--font-mono); font-size: 12.5px; color: var(--signal-ink); background: var(--chip-bg); padding: 9px 14px; border-radius: 3px; text-decoration: none; }
+  .cta-row a.secondary:hover, .cta-row a.primary:hover { filter: brightness(1.05); }
+
+  @media (max-width: 720px) {
+    .shell { grid-template-columns: 34px minmax(0,1fr); }
+    .rail { padding: 30px 0 30px; gap: 8px; }
+    .rail .lbl { display: none; }
+    main { padding: 0 16px 40px; }
+    h1.title { max-width: none; }
   }
+  :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
 </style>
 </head>
 <body>
 
-<header class="site">
-  <div class="brand">dev<span>with</span>abhinav</div>
-  <nav><a href="index.html">&larr; Back to profile</a></nav>
+<header class="topbar">
+  <div class="brand"><span class="mark">a</span> devwithabhinav · AI System Design &amp; SDLC</div>
 </header>
 
-<div class="wrap">
-
-  <section class="hero">
-    <h1>AI System Design &amp; SDLC</h1>
-    <p class="lede">A Principal Architect's playbook for taking AI/LLM systems from discovery to steady-state operations.</p>
-    <p class="meta-line">7 phases &middot; production-grade patterns &middot; 2026 tooling snapshot</p>
-
-    <div class="callout">
-      <p><strong>How each phase is structured:</strong></p>
-      <ol>
-        <li>Phase Objectives — architectural goals &amp; deliverables</li>
-        <li>System Components &amp; Topologies — concrete patterns</li>
-        <li>Tooling &amp; Tech Stack — production-grade tools (2026 snapshot)</li>
-        <li>Trade-offs &amp; Failure Modes — where systems break, and mitigations</li>
-      </ol>
-    </div>
-  </section>
-
-  <section class="phases">
-    <div class="section-head">
-      <h2>The phases</h2>
-      <span class="mono" style="color:var(--ink-soft);">click a phase to expand</span>
-    </div>
-
-    <!-- PHASE 1 -->
-    <details class="phase" open>
-      <summary>
-        <div class="phase-head">
-          <span class="phase-num">PHASE 1</span>
-          <span class="phase-title">Requirements, Scoping &amp; Feasibility Analysis</span>
-        </div>
-        <span class="toggle-label"><span class="show-more">Read more</span><span class="show-less">Show less</span></span>
-      </summary>
-      <div class="phase-teaser">
-        <p>The single most expensive mistake in AI system design is applying a probabilistic engine to a deterministic problem — this phase exists to catch that before any architecture work starts.</p>
-      </div>
-      <div class="phase-body">
-        <p class="lede-block" style="margin-top:0;">Before touching any architecture, this phase exists to answer one question honestly: should this even be an LLM system? Most production AI failures trace back to skipping this phase — teams reach for an LLM because it's exciting, not because the problem demands probabilistic reasoning. Everything downstream (cost, latency, reliability) gets harder to fix later than to prevent here.</p>
-
-        <h4>phase objectives</h4>
-
-        <p class="lede-block" style="margin-top:0;"><strong>Deterministic vs. probabilistic classification</strong> is the foundational filter. Ask: does this task have one correct, computable answer given the inputs? Deterministic — "what's this customer's account balance?" (a database query), "is this date within the return window?" (a comparison) — has exact answers; feeding it through an LLM adds latency, cost, and a non-zero chance of a wrong answer for something a <code>SELECT</code> statement gets right 100% of the time. Probabilistic — "summarize this contract's risk clauses," "what does this customer actually want, given this messy support ticket?" — has no single correct string, only better or worse answers; this is where LLMs earn their cost. Getting this wrong in one direction (LLM for deterministic work) builds an unreliable, expensive lookup table; getting it wrong the other way (hardcoded rules for genuinely open-ended language tasks) means the system breaks the moment inputs vary from what was anticipated.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase1-1.webp" alt="Diagram contrasting deterministic rule/lookup tasks with probabilistic model-call tasks, the architectural decision gate, and the 'let's use an LLM' trap." loading="lazy" />
-          <figcaption>The deterministic/probabilistic split, the architectural decision gate, and why 99% correct is a failure for tasks that need 100% reproducibility.</figcaption>
-        </figure>
-
-        <p class="lede-block"><strong>Token economics, ROI modeling, and NFRs</strong> are three things bundled together, each answering a different question. Token economics: what does one interaction cost? (input tokens + output tokens — output is typically 3&ndash;5x pricier per token — &times; expected volume). This isn't a nice-to-have estimate; it's often the deciding factor on whether a feature ships at all. ROI modeling: cost of the AI system vs. cost of the alternative (usually human labor, or doing nothing) — a support-ticket triage assistant costing $0.02/ticket to save 4 minutes of agent time worth $0.60 is a strong case; one costing $0.15/ticket to save 30 seconds is a harder sell. NFRs (Non-Functional Requirements), specifically: TTFT (Time-To-First-Token) governs perceived responsiveness — a 3-second TTFT feels broken even if the full answer streams in fast after; throughput is how many concurrent requests/sessions the system must sustain; latency budget is the total time ceiling for a complete response, broken down per component. These numbers get derived from actual user expectations and written down before architecture decisions, because they constrain which techniques are even viable — a 500ms latency budget eliminates most multi-hop agentic RAG designs before a single box gets drawn.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase1-3.webp" alt="Diagram of the token-economics unit-cost equation, the ROI equation for AI versus a human alternative, cost-model blind spots including the agentic fat tail, and the Phase 1 toolbox." loading="lazy" />
-          <figcaption>Token economics &amp; ROI viability, the agentic-trap fat tail on cost distributions, and the Phase 1 toolbox.</figcaption>
-        </figure>
-
-        <h4>system components &amp; topologies</h4>
-
-        <p class="lede-block" style="margin-top:0;"><strong>The decision tree gate</strong> is the practical embodiment of the deterministic/probabilistic split: every incoming request first hits a gate that asks "can deterministic logic handle this?" If yes, it's routed to a rules engine or direct data lookup — no LLM involved at all. Only the residual, genuinely ambiguous cases proceed to a model call. The architectural implication: the system isn't "an LLM app" — it's a hybrid system with an LLM as one component, gated behind a cheap, fast classifier or explicit routing logic. This is why the cost reduction (60&ndash;80%) is real and not theoretical — it comes from not paying LLM prices for the 60&ndash;80% of traffic that never needed an LLM in the first place.</p>
-
-        <p class="lede-block"><strong>The latency budget waterfall.</strong> Instead of one number ("under 3 seconds"), the budget is allocated across every hop the request makes: Network (50ms) &rarr; Auth (30ms) &rarr; Retrieval (400ms) &rarr; Generation (2000ms) &rarr; Post-processing (100ms) = 2,580ms total. Breaking it down at design time, before anything is built, matters because when the SLA gets violated in production, the team needs to know where to look without guessing — if generation is budgeted at 2000ms and retrieval at 400ms, and responses are running 4 seconds, it's immediately clear whether to check retrieval (bad index, no caching), generation (wrong model tier, no streaming), or something entirely unbudgeted like a forgotten guardrail check. Without this waterfall, debugging latency becomes archaeology.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase1-2.webp" alt="Latency budget waterfall diagram allocating milliseconds across network, auth, retrieval, generation, and post-processing, plus the TTFT-versus-throughput connection-pool tension." loading="lazy" />
-          <figcaption>The latency budget waterfall, and the TTFT-vs-throughput connection-pool trap.</figcaption>
-        </figure>
-
-        <h4>tooling &amp; tech stack</h4>
-        <ul>
-          <li><strong>Cost modeling:</strong> usually a spreadsheet seeded with real provider pricing (Anthropic/OpenAI/Google per-token rates) times a volume forecast — this phase is about the prediction, not the measurement. Helicone/Langfuse come in after launch to validate whether the model matched reality.</li>
-          <li><strong>Requirements/traceability:</strong> Jira/Linear for tracking the requirement itself, but the important artifact is the ADR (Architecture Decision Record) — a short markdown file in the repo like <code>docs/adr/0001-use-rag-over-finetune.md</code> that captures why a decision was made, not just what was decided. This matters enormously at staff level: six months later, someone will ask "why didn't we just fine-tune?" and the ADR is the answer, not someone's memory.</li>
-          <li><strong>Load/latency estimation:</strong> back-of-envelope math using Little's Law (L = &lambda;W — the relationship between concurrent requests, arrival rate, and time-in-system) to sanity-check whether the throughput target is even physically plausible given the latency budget, before anything is built. Validated later with actual load tests (k6, Locust) once a prototype exists.</li>
-        </ul>
-        <p class="lede-block">The pattern across all three: estimate cheaply and on paper first, validate expensively and with real tools second.</p>
-
-        <h4>trade-offs &amp; challenges</h4>
-        <div class="trade-off"><strong>The "let's use an LLM" trap:</strong> teams skip the deterministic/probabilistic classification and default to an LLM because it's the exciting new tool. The failure mode is specific and dangerous — applying non-deterministic logic to something that requires 100% reproducibility (tax calculations, eligibility determinations, compliance checks). An LLM might get the tax calculation right 99% of the time, but "99% correct" is not an acceptable standard for arithmetic that used to be a formula. Mitigation: require a written justification any time probabilistic logic touches a compliance-sensitive computation — this forces the deterministic option to be considered and rejected explicitly, not skipped silently.</div>
-        <div class="trade-off"><strong>TTFT vs. throughput tension:</strong> streaming responses makes TTFT look great — the user sees output almost immediately — but streaming means holding a connection open for the entire generation, not just until the first token. Under high concurrency this ties up connection pool resources for longer, straining the pool exactly when it's needed most. Mitigation: use multiplexed protocols like Server-Sent Events (SSE) rather than raw long-lived sockets, which handle many concurrent open streams far more efficiently.</div>
-        <div class="trade-off"><strong>Cost model blind spots:</strong> two common ones. Teams model the average cost per interaction, but agentic/retry-heavy flows have a much fatter tail — a query that triggers a self-correction loop or a multi-step agent chain can cost 5&ndash;10x the average, so budgeting on average, not P90, means the bill surprises everyone the first month real traffic hits. And output tokens are priced 3&ndash;5x higher than input tokens — a system that returns long, detailed answers looks cheap in a naive "tokens &times; price" spreadsheet if only the prompt was counted.</div>
-      </div>
-    </details>
-
-    <!-- PHASE 2 -->
-    <details class="phase">
-      <summary>
-        <div class="phase-head">
-          <span class="phase-num">PHASE 2</span>
-          <span class="phase-title">Architectural Decision Frameworks &amp; Model Selection</span>
-        </div>
-        <span class="toggle-label"><span class="show-more">Read more</span><span class="show-less">Show less</span></span>
-      </summary>
-      <div class="phase-teaser">
-        <p>Phase 1 told you whether to use an LLM at all. Phase 2 commits you to which technique and which model — and to a decision-making process you can defend later, instead of "we picked GPT-4 because everyone does."</p>
-      </div>
-      <div class="phase-body">
-        <p class="lede-block" style="margin-top:0;">Phase 1 told you whether to use an LLM. Phase 2 tells you which technique and which model — and just as importantly, it commits you to a decision-making process you can defend later, instead of "we picked GPT-4 because everyone does."</p>
-
-        <h4>phase objectives</h4>
-        <ul>
-          <li><strong>Build vs. Buy, and technique selection.</strong> "Build vs. Buy" means foundation model API (Anthropic/OpenAI/Google) vs. self-hosted open-source model vs. a fully custom model trained from scratch — and in practice, "train from scratch" is almost never right for application teams; it's reserved for organizations with a model lab's data scale and budget. The real decision is API vs. self-hosted OSS, hinging on data sensitivity, cost at scale, and latency control. The technique-selection ladder — Prompt Engineering &rarr; RAG &rarr; GraphRAG &rarr; Fine-Tuning &rarr; RLHF/DPO — is ordered by cost and complexity, and the objective is explicit: pick the minimum viable technique that meets the NFRs from Phase 1. This is a discipline, not a preference — teams reach for fine-tuning because it feels like "real ML work," when prompt engineering or RAG would have solved the actual problem far more cheaply. The job of this phase is forcing a justification for skipping each cheaper rung before reaching for the next one.</li>
-          <li><strong>Multi-model routing strategy.</strong> Not every query deserves the most expensive, most capable model. The objective is avoiding both single-model lock-in and single-model cost inefficiency: a routing policy decides, per-request, which model handles it, based on task complexity, required context window, and cost target. This is a deliverable in its own right — a documented policy (even if implemented as a simple classifier) for why request type X goes to model tier Y.</li>
-        </ul>
-
-        <figure class="phase-figure">
-          <img src="images/phase2-4.webp" alt="Selection ladder diagram showing build vs. buy trade-offs and the five-rung technique selection ladder from prompt engineering to RLHF/DPO." loading="lazy" />
-          <figcaption>Build vs. buy, and the technique-selection ladder — never climb to a higher rung until you've proven the cheaper one can't solve it.</figcaption>
-        </figure>
-
-        <h4>system components &amp; topologies</h4>
-        <p class="lede-block" style="margin-top:0;"><strong>The decision matrix</strong> is the concrete tool that makes the ladder non-arbitrary. Score the problem 1&ndash;5 across five axes — data freshness need, domain specificity, latency sensitivity, cost ceiling, and explainability requirement — and the routing logic follows directly: static facts plus a tone/style shift &rarr; Prompt Engineering (no external data needed, the model already "knows" the content); external, private, or frequently-changing knowledge &rarr; RAG (you're not changing what the model knows how to do, you're changing what facts it has access to at query time); multi-hop reasoning over interconnected entities — e.g. "does this vendor's subsidiary violate our compliance policy through an indirect ownership chain" &rarr; GraphRAG (plain vector RAG retrieves similar chunks, it doesn't traverse relationships); durably changing behavior, style, or latent reasoning pattern rather than adding facts &rarr; Fine-tuning/LoRA (e.g. a legal team's mandated structured output format, applied every time without re-explaining it in every prompt).</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase2-3.webp" alt="Five-axis decision scoring matrix and cascade model router topology diagram showing routing to fast, code-specialized, and frontier model tiers." loading="lazy" />
-          <figcaption>The 5-axis decision scoring matrix, and the cascade router topology routing requests to fast, code, and frontier tiers.</figcaption>
-        </figure>
-
-        <p class="lede-block"><strong>The model router topology</strong> is a cascade (or mixture-of-models) pattern: a cheap, fast component — often a small LLM or even just an embedding-based classifier — sits in front of the model gateway and looks at the incoming query to decide its complexity tier. Simple/short queries route to a fast, cheap model (Haiku-class); complex reasoning gets the large model (Opus-class); code gets a code-specialized model. The architectural insight worth internalizing: the router itself is also a model call, so it has to be cheap enough that running it on every request doesn't erase the savings from routing correctly — which is why routers are usually small/fast models or non-LLM classifiers, never another expensive model call.</p>
-
-        <h4>tooling &amp; tech stack</h4>
-        <ul>
-          <li><strong>Proprietary APIs (buy side):</strong> Anthropic Claude (via Claude Platform, AWS Bedrock, or Google Vertex), OpenAI, Google Gemini — frontier capability, managed reliability, zero infrastructure overhead.</li>
-          <li><strong>Open-source self-hosted (build side):</strong> Llama, Mistral, Qwen, served through vLLM or TGI (Text Generation Inference) for optimized batched inference, or Ray Serve when serving needs to scale across a cluster — total data residency and inference-stack control, at the cost of owning the ops burden too.</li>
-          <li><strong>Fine-tuning:</strong> LoRA/QLoRA via Hugging Face PEFT or Axolotl for parameter-efficient fine-tuning — training small adapter layers rather than the whole model, dramatically cheaper and faster than full fine-tuning. Managed fine-tuning is also available directly through provider consoles for teams that don't want to own the training infrastructure.</li>
-          <li><strong>Routing frameworks:</strong> LiteLLM is the most common choice — a model-agnostic gateway that routes/fails over across providers behind a unified API. OpenRouter and Martian serve similar purposes; for anything beyond simple routing rules, teams often build a custom classifier + gateway combination.</li>
-          <li><strong>GraphRAG:</strong> Neo4j (the standard graph database), the Microsoft GraphRAG library (automatic entity/relationship extraction from unstructured text), or Amazon Neptune for AWS-native deployments.</li>
-        </ul>
-
-        <figure class="phase-figure">
-          <img src="images/phase2-2.webp" alt="Tech stack diagram covering proprietary APIs, self-hosted open source models, model gateways and routing tools, and fine-tuning and GraphRAG tooling." loading="lazy" />
-          <figcaption>The Phase 2 tooling stack — build with agnostic gateways, never hardcode to a single model API.</figcaption>
-        </figure>
-
-        <h4>trade-offs &amp; challenges</h4>
-        <p class="lede-block" style="margin-top:0;"><strong>RAG vs. fine-tuning confusion</strong> is the single most common architectural mistake at this phase, so it's worth being precise. RAG injects facts at inference time — update the underlying documents and the system's knowledge updates immediately, no retraining, and it's auditable: you can point to the exact chunk that produced an answer. The cost is architectural complexity and added latency (a retrieval hop before generation), plus a whole new failure surface (bad retrieval = bad answer, even with a perfect model). Fine-tuning bakes in behavior — format, voice, task-specialization, a particular way of reasoning through a narrow problem type. It's fast at inference (no retrieval hop) but expensive to update (every change needs a retraining/adapter-swap cycle), carries a real risk of catastrophic forgetting (the model gets worse at things it used to do well while learning the new behavior), and is much harder to audit, since the knowledge is now distributed across the weights rather than pointing to "the fact" that caused an output. The rule of thumb worth memorizing: RAG for facts, fine-tuning for format/voice/task-specialization — fine-tuning to "teach the model about our product catalog" is almost always a RAG problem wearing a fine-tuning costume.</p>
-
-        <div class="trade-off"><strong>GraphRAG overhead:</strong> building and maintaining a knowledge graph isn't a one-time cost — entity resolution (is "Acme Corp" the same as "Acme Corporation, Inc." in a different document?) and relationship extraction are standing engineering commitments. Only worth it when multi-hop relational reasoning measurably improves answer quality over plain vector RAG. Mitigation is empirical, not architectural: run an A/B comparison against plain vector RAG on the actual eval set before committing to the graph infrastructure — don't build the graph because it sounds more sophisticated.</div>
-        <div class="trade-off"><strong>Vendor lock-in risk:</strong> hardcoding prompts and tool schemas to one provider's specific quirks (message format, function-calling syntax, system prompt conventions) means switching providers later requires rewriting significant application logic, not just changing a config value. Mitigation: abstract behind a gateway (LiteLLM or a custom equivalent) using provider-agnostic message schemas, and always maintain a documented fallback model list — this also directly enables the failover topology built in Phase 6.</div>
-        <div class="trade-off"><strong>Router misclassification — the subtle, dangerous one:</strong> a router that sends a genuinely complex query to a cheap model doesn't throw an error, it just silently returns a worse answer. No exception to catch, no alert to fire — worse than a crash, because crashes get noticed while complex-but-wrong answers erode trust slowly and invisibly. Mitigation: build confidence thresholds into the router (default to the safer/larger model when complexity classification isn't confident, rather than the cheaper one), and validate routing decisions with shadow-routing evaluation — run the router's decisions against a held-out eval set and compare against what a human or a larger model would have chosen, before trusting it in production.</div>
-
-        <figure class="phase-figure">
-          <img src="images/phase2-1.webp" alt="Trade-offs and pitfalls diagram covering the RAG versus fine-tuning golden rule, GraphRAG overhead, vendor lock-in, and silent router misclassification." loading="lazy" />
-          <figcaption>The four traps of Phase 2 — and the throughline: what's the cheapest thing that actually works? Prove it before scaling.</figcaption>
-        </figure>
-      </div>
-    </details>
-
-    <!-- PHASE 3 -->
-    <details class="phase">
-      <summary>
-        <div class="phase-head">
-          <span class="phase-num">PHASE 3</span>
-          <span class="phase-title">Data Engineering, Vectorization &amp; Governance</span>
-        </div>
-        <span class="toggle-label"><span class="show-more">Read more</span><span class="show-less">Show less</span></span>
-      </summary>
-      <div class="phase-teaser">
-        <p>Building the retrieval substrate that grounds the system in truth — and enforcing access control at the retrieval layer, not just the UI.</p>
-      </div>
-      <div class="phase-body">
-        <p class="lede-block">If Phase 2 decided the system needs RAG, Phase 3 is where the thing RAG actually depends on gets built: a retrieval substrate that's accurate, fresh enough, and secure enough to trust in production. This is also where most "the AI gave a wrong answer" bugs really originate — not from the model, but from bad retrieval feeding it bad context.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase3-1.webp" alt="Overview diagram of Phase 3: ingestion pipelines, chunking and embeddings, hybrid retrieval, and governance." loading="lazy" />
-          <figcaption>Phase 3 at a glance — ingestion, chunking, hybrid retrieval, and pre-filter governance.</figcaption>
-        </figure>
-
-        <h4>phase objectives</h4>
-        <ul>
-          <li><strong>Ingestion pipelines — idempotent, incremental, lineage-tracked.</strong> Idempotent: re-running the pipeline on the same document shouldn't create duplicate chunks/vectors — without explicit dedup logic (a content hash or document ID + version check), a scheduler retry silently doubles the index over time. Incremental: the entire corpus shouldn't need reprocessing every time one document changes — this is what keeps "index freshness" sustainable rather than an ever-more-expensive nightly full rebuild. Lineage-tracked: every chunk traces back to its source document, version, and ingestion timestamp — not bureaucracy, but what makes "why did the assistant say that" and "this source doc just changed, what needs re-indexing" answerable.</li>
-          <li><strong>A chunking + embedding strategy tuned to domain structure.</strong> The goal isn't "chunk the documents" — it's chunking them in a way that matches how they're actually structured. A legal contract, a Slack export, and an API reference all have completely different natural units of meaning; getting this wrong is one of the most common causes of vague or fragmented RAG answers.</li>
-          <li><strong>Hybrid retrieval tuned for recall and precision.</strong> Vector search alone misses exact-match cases (a SKU, an error code, a proper noun); keyword search alone misses semantic paraphrases. The objective is combining both — plus graph traversal when Phase 2 calls for it — and tuning the combination against real queries, not just wiring them together and hoping.</li>
-          <li><strong>Governance — PII masking, RBAC/ABAC at the retrieval layer.</strong> Access control has to be enforced where retrieval happens, not somewhere else in the stack like the UI — this is the single most consequential point in the whole phase.</li>
-        </ul>
-
-        <h4>system components &amp; topologies</h4>
-
-        <p class="lede-block" style="margin-top:0;"><strong>The ingestion pipeline topology:</strong> source connectors &rarr; layout-aware parsers &rarr; cleaning/normalization &rarr; chunking &rarr; embedding &rarr; indexing &rarr; metadata tagging (source, ACL, timestamp, version). "Layout-aware" matters enormously for real enterprise documents — a naive text extractor on a PDF with tables interleaves table cells with surrounding paragraph text in an order that makes no sense, destroying the semantic unit being chunked. Metadata tagging happens at ingestion, not as an afterthought: ACL tags, source system, and version attach to each chunk before it ever enters the index, which is what makes retrieval-time filtering possible later.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase3-2.webp" alt="Ingestion pipeline diagram showing idempotent, incremental, and lineage-tracked properties, and the source-to-index flow." loading="lazy" />
-          <figcaption>The ingestion pipeline — the Big 3 properties, and the source-to-index flow.</figcaption>
-        </figure>
-
-        <ul>
-          <li><strong>Chunking strategies:</strong> fixed-size with overlap (the baseline — split every N tokens with overlap so a sentence never gets cut at a boundary; simple, works everywhere, optimal nowhere); semantic chunking (split where consecutive sentences' embeddings diverge significantly — a topic-shift detector — producing variable-length but semantically coherent chunks); structure-aware chunking (respect markdown headers, table boundaries, code blocks — a chunk should never split a table in half or cut a function mid-body); small-to-big retrieval (embed small, precise chunks for accurate matching, but return the parent section to the model once one is retrieved — solving the real tension that small chunks match queries precisely but often lack enough context alone).</li>
-        </ul>
-
-        <figure class="phase-figure">
-          <img src="images/phase3-3.webp" alt="Chunking tuning knob diagram showing too small versus too large chunks, four chunking strategies, and embedding model drift." loading="lazy" />
-          <figcaption>Chunking as a tuning knob, the four strategies, and why embedding drift forces a full re-index.</figcaption>
-        </figure>
-
-        <p class="lede-block"><strong>Hybrid search topology:</strong> query &rarr; [BM25/keyword index] + [dense vector index] + [optional graph traversal] &rarr; fusion (Reciprocal Rank Fusion or a cross-encoder reranker) &rarr; top-K to the model. BM25/keyword (Elasticsearch/OpenSearch) catches exact terms, codes, and names; dense vector (Pinecone/Weaviate/pgvector) catches semantic/paraphrase matches. RRF is a simple, effective way to combine two ranked lists without calibrating their scores against each other. A cross-encoder reranker (Cohere Rerank, BGE-reranker) goes further — it re-scores top candidates by jointly encoding query + document together, more accurate but too slow to run over the whole corpus, so it only reranks the top-K from the cheaper first pass.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase3-4.webp" alt="Hybrid search architecture diagram showing keyword and vector search feeding into fusion and reranking, plus freshness versus cost trade-offs." loading="lazy" />
-          <figcaption>Why one search method isn't enough, the fusion/rerank pipeline, and the freshness-vs-cost trade-off.</figcaption>
-        </figure>
-
-        <p class="lede-block"><strong>Governance enforcement point — pre-filter, not post-filter.</strong> This is the component that deserves the most attention. ACL/metadata filters get applied inside the vector DB query itself — as a pre-filter restricting which vectors are even scored — never as a step that runs after retrieval to strip out results the user shouldn't see. If top-20 results are retrieved first and unauthorized ones filtered out afterward, two things go wrong: fewer than the K results wanted may remain (or zero, if everything relevant happened to be restricted), so context quietly degrades for no visible reason; and worse, some retrieval implementations expose scoring/ranking signals, or a clever prompt can get the model to reference something it "saw" during retrieval even if it wasn't in the final filtered set. Filtering before scoring means restricted documents are never retrieved, never scored, and never touch the model's context window — there's no path for leakage because the data was never in the candidate set.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase3-5.webp" alt="Governance and security diagram contrasting bad post-filtering with good pre-filtering, plus PII masking trade-offs and the Phase 3 tech stack." loading="lazy" />
-          <figcaption>Pre-filter vs. post-filter, the PII-masking catch, and the full Phase 3 tooling stack.</figcaption>
-        </figure>
-
-        <h4>tooling &amp; tech stack</h4>
-        <ul>
-          <li><strong>Vector DBs:</strong> Pinecone, Weaviate, Qdrant, Milvus — dedicated vector databases built for this. pgvector is the pragmatic choice when Postgres is already running and another piece of infrastructure isn't wanted — fewer moving parts, at the cost of some scale ceiling versus purpose-built vector DBs.</li>
-          <li><strong>Ingestion/orchestration:</strong> Airflow or Dagster for scheduling and dependency management; LlamaIndex/LangChain data connectors for common source integrations; Unstructured.io specifically for robust, layout-aware parsing of PDFs, Word docs, and HTML.</li>
-          <li><strong>Embeddings:</strong> OpenAI text-embedding-3, Cohere Embed, Voyage AI (managed/API), or open-source BGE/E5 models when self-hosting is needed for data residency or cost.</li>
-          <li><strong>Reranking:</strong> Cohere Rerank (managed API) or BGE-reranker-large (self-hosted).</li>
-          <li><strong>PII/governance:</strong> Presidio (Microsoft) for detecting and masking PII at ingestion; Immuta/Collibra for data lineage and access governance at the platform level; OPA (Open Policy Agent) for expressing ABAC rules as policy-as-code evaluated at query time — this is what actually implements the pre-filter enforcement point above.</li>
-        </ul>
-
-        <h4>trade-offs &amp; challenges</h4>
-        <div class="trade-off"><strong>Chunking is a tuning knob, not a one-time decision:</strong> too-small chunks lose surrounding context, producing fragmented, incomplete-feeling answers; too-large chunks dilute the embedding — a 2000-token chunk covering five subtopics produces a "smeared" embedding that doesn't match any single query well, and eats into the context budget faster. Mitigation: run chunk-size sweeps against the eval set (Phase 5) and measure retrieval quality empirically, rather than picking a number because it "seemed reasonable."</div>
-        <div class="trade-off"><strong>Embedding model drift:</strong> switching embedding models — even to a "better" one — puts old and new vectors in different geometric spaces that aren't comparable; they can't be mixed in the same index and expected to work. Changing embedding models is a full corpus re-embedding migration, not a config change, and needs to be planned and resourced as such (compute cost, downtime/blue-green strategy, validation against the eval set before cutover).</div>
-        <div class="trade-off"><strong>RBAC-at-retrieval is the #1 security gap in RAG systems:</strong> many teams enforce access control only in the application layer — checking permissions before showing the final answer — while the vector DB itself has no ACL awareness. A sufficiently crafted prompt can sometimes get the model to retrieve and reference chunks the requesting user shouldn't have access to, because nothing stopped those chunks from being retrieved in the first place, only from being displayed through the normal path. This is the pre-filter vs. post-filter distinction above, and it's worth treating as a hard architectural rule, not a best-effort guideline.</div>
-        <div class="trade-off"><strong>Freshness vs. cost:</strong> real-time re-indexing on every document change is expensive and often unnecessary — most production systems use scheduled incremental re-indexing (e.g., every 15 minutes via change-data-capture) with an explicitly documented staleness SLA ("information may be up to 15 minutes stale"). The mitigation isn't "make it instant" — it's making the staleness bound known and acceptable, which is a product decision as much as an engineering one.</div>
-        <div class="trade-off"><strong>PII leakage through retrieval:</strong> masking PII at ingestion can backfire — masking a customer's name in a support ticket before embedding makes that chunk useless for retrieving the ticket when the same customer asks a follow-up question later, since the embedding no longer carries the identifying signal that made it relevant. Mitigation: separate the two concerns — mask for indexing/embedding if compliance requires it, but gate access to the original unmasked text behind the same ABAC policy used for retrieval, so the right person can still see the real content while it isn't indiscriminately searchable.</div>
-      </div>
-    </details>
-
-    <!-- PHASE 4 -->
-    <details class="phase">
-      <summary>
-        <div class="phase-head">
-          <span class="phase-num">PHASE 4</span>
-          <span class="phase-title">Agentic Workflows, Memory &amp; Orchestration</span>
-        </div>
-        <span class="toggle-label"><span class="show-more">Read more</span><span class="show-less">Show less</span></span>
-      </summary>
-      <div class="phase-teaser">
-        <p>Choosing an agent topology proportional to task complexity — and making tool-calling deterministic and safe.</p>
-      </div>
-      <div class="phase-body">
-        <p class="lede-block" style="margin-top:0;">Phases 1&ndash;3 got you a system that can answer questions grounded in data. Phase 4 is where the system starts doing things — taking multi-step actions, calling tools, and maintaining state across a conversation or across sessions. This is also where over-engineering does the most damage, so the discipline here matters as much as the patterns.</p>
-
-        <h4>phase objectives</h4>
-        <ul>
-          <li><strong>Choose agent topology proportional to task complexity.</strong> This is stated as a constraint, not just a design choice: don't over-engineer a single Q&amp;A bot into a multi-agent swarm. "Multi-agent" sounds more sophisticated and is genuinely tempting to reach for — but every agent-to-agent handoff is a place where context gets lost, latency accumulates, and cost multiplies. Default posture: start with the simplest topology that could work, and only add agents when the task genuinely decomposes into distinct roles.</li>
-          <li><strong>Make tool-calling deterministic and safe.</strong> An LLM deciding which tool to call and what arguments to pass is inherently probabilistic — but the execution of that tool shouldn't compound that uncertainty. The objective is validated schemas (the tool call's shape is checked before it runs) and idempotent side effects (calling the same tool twice with the same inputs doesn't cause double harm — double-charging, double-sending). Same principle as Phase 1's deterministic/probabilistic split, applied one layer deeper: the decision to call a tool can be probabilistic, but its execution should be as deterministic and safe as any other backend operation.</li>
-          <li><strong>Design memory: short-term vs. long-term.</strong> Two genuinely different problems get lumped under "memory," and the objective is to keep them architecturally distinct — short-term is what's been said in this conversation, needed for coherence within a session; long-term is what the system should remember about a user or entity across sessions (preferences, past decisions, recurring facts). Conflating these leads to a memory system that's neither a good conversation buffer nor a good persistent knowledge store.</li>
-        </ul>
-
-        <figure class="phase-figure">
-          <img src="images/phase4-1.webp" alt="Diagram comparing the single-agent ReAct loop with stateful multi-agent orchestration via LangGraph or AutoGen/CrewAI, and the multi-agent overhead warning." loading="lazy" />
-          <figcaption>Choosing a topology — the single-agent ReAct loop workhorse vs. stateful multi-agent orchestration, and why the default should stay single-agent.</figcaption>
-        </figure>
-
-        <h4>system components &amp; topologies</h4>
-
-        <p class="lede-block" style="margin-top:0;"><strong>Single-agent ReAct loop:</strong> LLM reasons &rarr; calls a tool &rarr; observes result &rarr; reasons again &rarr; responds. This is the workhorse pattern for bounded, single-domain tasks — "look up this order and summarize it," "check this customer's account status and answer their question." One model, looping through reason-act-observe until it has enough information to respond. Most production agentic systems should live here — it's simple to debug (one trace, one model's reasoning to inspect) and cheap (one model's worth of calls, not N).</p>
-
-        <p class="lede-block"><strong>Stateful multi-agent orchestration</strong> is for tasks that naturally decompose into distinct roles — e.g. "research &rarr; draft &rarr; review &rarr; send," where each stage genuinely benefits from a different prompt, different tool access, or even a different model tier. LangGraph models the workflow as an explicit state machine over agent nodes — crucially, it supports cycles (an agent can loop back, e.g. a critic sends work back to a drafter), checkpointing (state persisted at each transition, so the workflow survives a crash), and human-in-the-loop interrupts (the graph pauses at a defined point and waits for human approval before continuing — essential for anything with real-world side effects). AutoGen/CrewAI model multi-agent collaboration more as a conversation between agents with defined personas/roles, rather than an explicit state graph — a good fit when the interaction pattern is closer to "agents debating/collaborating" than "a fixed pipeline with defined stages." The decision between these isn't about which is "better" — it's about whether the workflow is better modeled as a state machine with explicit transitions (LangGraph) or a role-based conversation (AutoGen/CrewAI).</p>
-
-        <p class="lede-block"><strong>Tool-calling mechanics:</strong> strict JSON-schema-validated function definitions — the tool's expected inputs are defined as a schema, and every call is validated against it before execution, catching a hallucinated parameter (e.g. an order ID in the wrong format) before it ever reaches a real system. Sandboxed execution with timeouts — tool execution happens in an isolated context with a hard timeout, so a hanging or malicious tool call can't stall the whole agent loop indefinitely. Idempotency keys — any tool with side effects gets called with a unique key per logical operation, so if the agent (or the underlying infrastructure) retries the call, the receiving system recognizes it as "already done" rather than executing it twice. This is standard practice in distributed systems generally; it's just newly critical here because LLM-driven retries are more common and less predictable than traditional application retries.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase4-2.webp" alt="Diagram of the core tension between probabilistic LLM tool-call decisions and deterministic execution, and the three pillars of safe tool calling: schema validation, sandboxing, and idempotency keys." loading="lazy" />
-          <figcaption>The probabilistic-decision/deterministic-execution split, and the three pillars of safe tool calling.</figcaption>
-        </figure>
-
-        <p class="lede-block" style="margin-top:0;"><strong>Memory architecture.</strong> Short-term: a sliding window (keep the last N turns) or a summarization-compressed buffer (older turns periodically summarized to save context space), stored in something fast like Redis, scoped strictly to the active session. Long-term: a separate vector-indexed memory store, per-user or per-org, that agents explicitly write to and read from. The key word is "separate" — this is architecturally distinct from the Phase 3 RAG knowledge base, because RAG holds corpus/factual knowledge (the same for every user), while long-term memory holds episodic/personal knowledge (specific to a user or interaction history). Mixing them means a memory store that's neither a clean corpus nor a clean personal record.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase4-4.webp" alt="Diagram contrasting short-term session memory in Redis with long-term semantic memory in Zep/Mem0/vector DB, and the trap of mixing RAG knowledge with long-term memory." loading="lazy" />
-          <figcaption>Short-term vs. long-term memory, and why RAG's corpus knowledge must stay architecturally separate from per-user long-term memory.</figcaption>
-        </figure>
-
-        <p class="lede-block"><strong>State persistence.</strong> For any agentic workflow that runs longer than a single request/response (multi-step, possibly with a human-in-the-loop pause), the in-progress state needs to be checkpointed somewhere durable — LangGraph's built-in checkpointers, or a plain Postgres/DynamoDB state table when building this from scratch. Without this, a process restart or a long pause-for-approval loses all progress and the workflow has to start over.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase4-3.webp" alt="Diagram showing why bare scripts lose state on crash, versus durable execution via LangGraph checkpointing or Temporal/Step Functions, and the human-in-the-loop approval gate." loading="lazy" />
-          <figcaption>Why bare scripts fail in production, durable execution via checkpointing, and the human-in-the-loop gate for high-stakes actions.</figcaption>
-        </figure>
-
-        <h4>tooling &amp; tech stack</h4>
-        <ul>
-          <li><strong>Orchestration:</strong> LangGraph, AutoGen, CrewAI, Microsoft Semantic Kernel — or, notably, a bare state machine like Temporal or AWS Step Functions, when maximum control is wanted without agent-framework abstractions at all.</li>
-          <li><strong>Durable execution:</strong> Temporal.io is increasingly used underneath agent orchestrators specifically to guarantee exactly-once tool execution and long-running workflow durability — the same durable-execution problem space as orchestrating distributed workflows in a microservices system, just with an LLM making some of the branching decisions instead of pure business logic.</li>
-          <li><strong>Memory stores:</strong> Redis for short-term; Zep, Mem0, or a dedicated namespace in an existing vector DB for long-term semantic memory.</li>
-          <li><strong>Tool schema validation:</strong> Pydantic in Python or Zod in TypeScript — the mechanism that enforces strict I/O contracts on every tool definition.</li>
-        </ul>
-
-        <figure class="phase-figure">
-          <img src="images/phase4-5.webp" alt="Diagram of the agent toolbox: orchestration and state-graph frameworks, short-term and long-term memory stores, and schema validation and contracts with Pydantic and Zod." loading="lazy" />
-          <figcaption>The Phase 4 toolbox — orchestration frameworks, memory stores, and the schema-validation layer that enforces contracts on every tool call.</figcaption>
-        </figure>
-
-        <h4>trade-offs &amp; challenges</h4>
-        <div class="trade-off"><strong>Multi-agent overhead:</strong> every hand-off between agents is a full extra LLM call, and every extra LLM call is a place where an intermediate summary can be slightly wrong, slightly lossy, or misinterpreted by the next agent in the chain. N agents means roughly N times the latency and cost of a single-agent approach, for a task a single well-designed agent loop might have solved directly. Default should always be single-agent; escalate to multi-agent only when the task has genuine separation-of-concerns needs (different tool access per role, different model tiers per subtask) or benefits from parallelism (independent subtasks that can run concurrently).</div>
-        <div class="trade-off"><strong>Non-deterministic tool selection:</strong> LLMs sometimes pick the wrong tool, or the right tool with a hallucinated parameter. The mitigation isn't "make the model smarter" — it's architectural: constrain the active toolset per conversation state. Don't expose 40 tools simultaneously and hope the model picks correctly; use routing or sub-agents to narrow what's available at any given point, so the model is choosing among 3&ndash;5 relevant tools, not searching a haystack of 40. Combined with strict input validation, this catches most tool-calling failures before they cause harm.</div>
-        <div class="trade-off"><strong>Runaway loops:</strong> agentic loops can spiral — infinite retries when a tool keeps failing, or a planner and a critic agent disagreeing indefinitely and bouncing work back and forth. This has a real cost dimension (every iteration is more tokens spent) and a real reliability dimension (the user is waiting on a task that will never converge). Mitigation: a hard max-iteration count and a token/cost ceiling per task, with a defined graceful-degradation path — "hand this off to a human" — rather than the system silently failing or burning budget indefinitely.</div>
-        <div class="trade-off"><strong>Memory pollution:</strong> long-term memory written to indiscriminately accumulates stale or contradictory facts over time — a user's preference from six months ago that's since changed, or two agents writing conflicting "facts" to the same memory store. Mitigation: enforce memory write policies (only persist explicitly confirmed facts, not every inference the agent made), periodically consolidate/decay old memory entries, and define a conflict-resolution rule on read — most commonly most-recent-wins, or explicit versioning so contradictions are visible rather than silently overwritten.</div>
-
-        <figure class="phase-figure">
-          <img src="images/phase4-6.webp" alt="Diagram of three agent failure modes: runaway retries and critic ping-pong, tool overload from too many exposed tools, and memory pollution from stale conflicting facts, each with its defense." loading="lazy" />
-          <figcaption>Agent failure modes — runaway loops, the 40-tool haystack, and memory pollution — each paired with its architectural defense.</figcaption>
-        </figure>
-
-        <p class="lede-block">The throughline here is the same discipline as Phase 2's "minimum viable technique" principle, applied to orchestration: default to the simplest agent topology, and treat every added agent, every persisted memory, and every tool exposure as something that has to earn its place — because each one is a place where the system can quietly get worse rather than fail loudly.</p>
-      </div>
-    </details>
-
-    <!-- PHASE 5 -->
-    <details class="phase">
-      <summary>
-        <div class="phase-head">
-          <span class="phase-num">PHASE 5</span>
-          <span class="phase-title">Guardrails, Security &amp; Evaluation</span>
-        </div>
-        <span class="toggle-label"><span class="show-more">Read more</span><span class="show-less">Show less</span></span>
-      </summary>
-      <div class="phase-teaser">
-        <p>Making the system safe to expose to real users, and measurable enough to improve with confidence — in CI/CD, not ad hoc.</p>
-      </div>
-      <div class="phase-body">
-        <p class="lede-block" style="margin-top:0;">Phases 1&ndash;4 built a system that retrieves, reasons, and acts. Phase 5 is where it gets made safe to expose to real users and measurable enough to trust your own claims about it. This phase is often treated as an afterthought — bolted on right before launch — but it's actually load-bearing: without it, there's no way to know whether a change made the system better or worse, and no defense against the specific ways LLM systems get attacked.</p>
-
-        <h4>phase objectives</h4>
-
-        <p class="lede-block" style="margin-top:0;"><strong>Defend against the OWASP Top 10 for LLMs.</strong> This is the security baseline, and it's worth understanding why LLM applications need a distinct threat model from traditional web apps. In a normal web app, user input is validated and sanitized at the boundary and the backend logic is trusted. In an LLM system, the model itself is a decision-maker that can be persuaded by anything in its context — including content that was never typed by the user at all (a retrieved document, a tool's output, a webpage the agent fetched). That's a fundamentally new attack surface.</p>
-
-        <p class="lede-block"><strong>Real-time input/output guardrails.</strong> The objective is a layer that inspects both what goes into the model and what comes out, in real time, as part of the request path — not as an offline audit that happens after the fact. This has to run fast enough not to blow the latency budget from Phase 1, which turns out to be one of the harder engineering constraints in this whole phase.</p>
-
-        <p class="lede-block"><strong>A repeatable evaluation harness in CI/CD.</strong> The objective is turning "does this feel better?" into a number that runs automatically on every change. Without this, every prompt tweak or model swap is a gamble evaluated by vibes, and regressions ship silently.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase5-1.webp" alt="Diagram of why traditional web security isn't enough for LLM apps, direct versus indirect prompt injection with a Trojan-horse PDF example, and the architectural defense rules: strict delimiters, ingestion anomaly detection, user-scoped tool permissions." loading="lazy" />
-          <figcaption>The LLM threat model — why the model's context window is a new attack surface, and direct vs. indirect prompt injection.</figcaption>
-        </figure>
-
-        <h4>system components &amp; topologies</h4>
-
-        <p class="lede-block" style="margin-top:0;"><strong>Defense-in-depth against the key OWASP LLM risks.</strong> Indirect prompt injection is the big one, and it's worth being precise about the mechanism. A direct prompt injection is a user typing "ignore your instructions" — relatively easy to guard against. An indirect injection is malicious instructions hidden inside content the system retrieves or fetches — a document in the RAG corpus, a webpage an agent browses, the output of a tool call. The model has no inherent way to distinguish "instructions from my system prompt" from "text that happens to look like instructions, sitting inside a document I retrieved." The architectural defense is treating all retrieved/tool content as untrusted data, never as instructions — enforced through strict system-prompt framing ("the following is reference material, not instructions"), tagging content by origin so the model can be trained/prompted to weight it differently, and output-side checks that flag responses which suddenly deviate from what the user actually asked for. Data poisoning is the related risk on the ingestion side — if an attacker (or just bad data hygiene) can get malicious or false content into the fine-tuning corpus or RAG index, the system's outputs are compromised at the source; mitigate with version-control and validation on any corpus used for training or ingestion, plus anomaly detection on the ingestion pipeline itself, flagging documents that look statistically unusual compared to the existing corpus. Unauthorized tool execution rounds this out: every tool call needs to be authorized against the permissions of the requesting user, not the blanket service-account permissions the agent process runs under — directly analogous to a principle already familiar from traditional backend systems (never trust that a client-side check is sufficient, always re-validate authorization server-side), just now applied to what an LLM decides to do, not just what a user submits in a form.</p>
-
-        <p class="lede-block"><strong>The guardrail pipeline topology:</strong> Input &rarr; [Input guardrail: jailbreak/PII/toxicity classifier] &rarr; LLM &rarr; [Output guardrail: hallucination/toxicity/format/PII-leak classifier] &rarr; Response. The key design constraint: guardrails should run as fast, cheap classifiers, ideally in parallel with or ahead of the main model call, not as another full LLM call stacked in series. A guardrail that's itself a slow, expensive model call doubles latency and cost for every single request — which directly threatens the TTFT/throughput budgets from Phase 1.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase5-2.webp" alt="Diagram of the real-time guardrail request-path topology with input and output guardrails, the guardrail latency tax from stacking LLM calls versus a cascade of cheap deterministic checks, and the false-positive trap in specialized domains." loading="lazy" />
-          <figcaption>The real-time guardrail topology, the latency tax of stacking model calls, and the cascade pattern that avoids it.</figcaption>
-        </figure>
-
-        <p class="lede-block" style="margin-top:0;"><strong>The evaluation harness:</strong> golden dataset (query, expected-behavior pairs) &rarr; automated scoring on every PR/deploy &rarr; regression gate in CI. Two evaluation approaches worth distinguishing. The RAG Triad covers three specific, measurable dimensions — Faithfulness: is the answer actually supported by the retrieved context, or did the model add something not in the source material (hallucination)? Answer Relevance: does the answer actually address what was asked, independent of whether it's faithful to the sources? Context Precision/Recall: did retrieval surface the right chunks, and only the right chunks — this evaluates the retrieval step in isolation from generation, which matters because a great model given bad context still produces a bad answer, and it's necessary to know which layer is at fault. LLM-as-Judge uses a stronger model to score outputs against a rubric, useful for more open-ended quality dimensions the RAG triad doesn't capture (tone, completeness, helpfulness) — with the important caveat, covered in trade-offs below, that the judge itself needs periodic validation.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase5-3.webp" alt="Diagram replacing subjective vibes with automated numeric scores, the RAG Triad of faithfulness, answer relevance, and context precision/recall as a triangle isolating which layer is broken, and the CI/CD regression gate pipeline." loading="lazy" />
-          <figcaption>Replacing vibes with automated scoring, the RAG Triad for isolating which layer broke, and the CI/CD regression gate.</figcaption>
-        </figure>
-
-        <h4>tooling &amp; tech stack</h4>
-        <ul>
-          <li><strong>Guardrail frameworks:</strong> NVIDIA NeMo Guardrails (lets you define programmable "rails" — topics the model should refuse, conversation flows it should follow), Meta Llama Guard (a purpose-built safety classifier model), Guardrails AI (focused on validating structured output format), and custom regex/PII classifiers built on Presidio for deterministic, fast checks that don't need a model call at all.</li>
-          <li><strong>Eval frameworks:</strong> Ragas (implements the RAG triad metrics specifically), TruLens, DeepEval, promptfoo (built specifically for CI-friendly prompt regression testing — the one to wire directly into a GitHub Actions pipeline), and Arize Phoenix eval templates.</li>
-          <li><strong>Security testing:</strong> garak (an LLM vulnerability scanner, analogous to a security scanner run against a traditional web app), promptfoo's red-teaming plugins, and manual red-team playbooks explicitly mapped to the OWASP LLM Top 10 categories so testing coverage is traceable to a known threat list.</li>
-        </ul>
-
-        <figure class="phase-figure">
-          <img src="images/phase5-4.webp" alt="Diagram of the Phase 5 defense toolbox in four quadrants: real-time guardrail frameworks, evaluation and RAG-metric frameworks, CI/CD prompt testing with promptfoo, and vulnerability/red-teaming scanners." loading="lazy" />
-          <figcaption>The Phase 5 toolbox — real-time guardrails, RAG evaluation metrics, CI/CD prompt testing, and vulnerability scanning, each matched to its job.</figcaption>
-        </figure>
-
-        <h4>trade-offs &amp; challenges</h4>
-        <div class="trade-off"><strong>Guardrail latency tax:</strong> stacking multiple classifier calls — one before generation, one after — can meaningfully add to TTFT, especially if any of them are themselves LLM-based rather than lightweight classifiers. Mitigation: run cheap, deterministic checks (regex, small classifiers, Presidio-style PII detection) inline in the main request path, and reserve heavier LLM-based guardrails for cases flagged as ambiguous by the cheap first pass — the same cascade principle from Phase 2's model routing, applied to safety checks instead of task complexity.</div>
-        <div class="trade-off"><strong>False positives erode trust:</strong> guardrails tuned on generic defaults tend to over-block in specialized domains — a healthcare or legal assistant will routinely encounter vocabulary (symptoms, injury descriptions, legal terminology around violence or abuse in a case file) that a generic toxicity classifier flags as unsafe, when it's completely normal for that domain. Mitigation: domain-tuned guardrail thresholds validated against real production query logs, not generic benchmark defaults.</div>
-        <div class="trade-off"><strong>LLM-as-Judge is not ground truth:</strong> a judge model has its own biases — commonly favoring longer, more confident-sounding, or more verbose answers regardless of actual correctness. Treating judge scores as objective truth without calibration risks optimizing the system toward "sounds better to another LLM" rather than "is actually better for the user." Mitigation: periodically sample judge scores against a human-labeled set and measure inter-rater agreement — if the judge and human raters disagree often, the judge needs recalibration (different rubric, different judge model, or additional context) before it's trusted to gate deployments.</div>
-        <div class="trade-off"><strong>Eval sets go stale:</strong> a golden eval set built at launch reflects the query distribution and corpus at that time. As the corpus grows, user behavior shifts, and new edge cases emerge in production, a static eval set stops representing real traffic — meaning the CI gate can pass cleanly while real-world quality quietly degrades on cases the eval set never covered. Mitigation: continuously mine production logs (connecting directly to Phase 7's feedback loops) for new hard cases — especially flagged or low-scoring interactions — and fold them into the eval set on a regular cadence, so it evolves alongside the system it's testing.</div>
-
-        <figure class="phase-figure">
-          <img src="images/phase5-5.webp" alt="Diagram of the LLM-as-judge blind spots including verbosity and self-preference bias, the inter-rater agreement calibration solution comparing judge scores to human expert scores, and the drifting golden dataset problem solved by mining production failures into CI." loading="lazy" />
-          <figcaption>Calibrating the judge against human raters, and why a static golden dataset drifts out of sync with real production traffic.</figcaption>
-        </figure>
-
-        <p class="lede-block">The throughline connecting this phase to everything before: Phase 3 taught that where you enforce something determines whether it works (retrieval-layer RBAC, not UI-layer). Phase 5 applies the same lesson to trust and safety — untrusted content has to be treated as untrusted at the point it enters the model's context, not filtered after the fact, and quality has to be measured continuously against real traffic, not just at a one-time launch gate.</p>
-      </div>
-    </details>
-
-    <!-- PHASE 6 -->
-    <details class="phase">
-      <summary>
-        <div class="phase-head">
-          <span class="phase-num">PHASE 6</span>
-          <span class="phase-title">LLMOps, Infrastructure &amp; Resilience</span>
-        </div>
-        <span class="toggle-label"><span class="show-more">Read more</span><span class="show-less">Show less</span></span>
-      </summary>
-      <div class="phase-teaser">
-        <p>Operationalizing for production-scale reliability and cost control — treating prompts, models, and indexes as first-class deployable artifacts.</p>
-      </div>
-      <div class="phase-body">
-        <p class="lede-block" style="margin-top:0;">Phases 1&ndash;5 designed a system that's architecturally sound and safe. Phase 6 is where it gets made to survive production — real traffic spikes, provider outages, rate limits, and the ongoing need to change prompts and models without breaking things. This is the phase that separates a working prototype from something that stays up at 3am when a provider has an incident.</p>
-
-        <h4>phase objectives</h4>
-
-        <p class="lede-block" style="margin-top:0;"><strong>A model gateway that abstracts providers, handles failover, enforces rate limits.</strong> The objective is a single point of control between the application and every model call it makes. Without this, provider-specific logic (auth, retry behavior, rate-limit handling) gets scattered across the codebase, and switching providers or adding failover means touching every call site instead of one component.</p>
-
-        <p class="lede-block"><strong>Caching layers to cut latency and cost.</strong> Two distinct forms of caching are needed because they solve different problems: reusing an exact repeated prefix (cheap, precise) versus reusing an answer to a similar-but-not-identical question (more powerful, riskier). The objective is having both, applied appropriately.</p>
-
-        <p class="lede-block"><strong>CI/CD for prompts, models, and vector indexes as first-class deployable artifacts.</strong> This is a mindset shift worth naming directly: a prompt change is a deployment, with the same rigor as a code deployment — versioned, tested against regressions, and rollback-capable. Same for a vector index update. Treating these as "just config" rather than deployable artifacts is how regressions ship silently.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase6-1.webp" alt="Diagram showing why hardcoded, scattered API calls break in production during a 3am provider outage, and the unified model gateway topology with provider routing, multi-key load balancing, automatic failover, burst queueing, and centralized cost attribution." loading="lazy" />
-          <figcaption>Why scattered provider calls break in production, and the model gateway's five jobs as a single point of control.</figcaption>
-        </figure>
-
-        <h4>system components &amp; topologies</h4>
-
-        <p class="lede-block" style="margin-top:0;"><strong>Model Gateway.</strong> A single ingress point in front of every model call, responsible for: provider routing — directing traffic to the right provider/model based on the routing policy from Phase 2; load balancing across API keys/regions — spreading load to avoid hitting per-key rate limits when a single key would bottleneck things; automatic failover — if Provider A times out or rate-limits, the gateway retries against an equivalent-tier model from Provider B, transparently to the calling application code; request queueing under rate-limit pressure — instead of every request failing immediately when a limit is hit, the gateway can queue and smooth out bursts; centralized logging/cost attribution — every model call passes through one place, making it possible to attribute cost and usage back to features/teams without instrumenting every call site separately. This is the same architectural pattern as an API gateway in a traditional microservices system — the difference is what sits behind it (model providers instead of internal services) and the specific failure modes (rate limits, token costs, model-quality equivalence) it has to handle.</p>
-
-        <p class="lede-block"><strong>Caching layers.</strong> Exact-match prompt caching: providers now offer native prompt caching — a static prefix (a large system prompt, or the retrieved RAG context if it doesn't change within a session) gets marked cacheable, and the provider only charges/processes the delta on subsequent calls that share that prefix. This is a large win specifically for RAG systems, where the same lengthy context block often gets re-sent across multiple turns of a conversation. Semantic caching goes further — caching by embedding similarity of the query, not exact string match. A new query that's semantically close to a previously answered one ("what's your return policy" vs. "how do returns work") can return the cached response without a model call at all, implemented with Redis plus a vector similarity check (the pattern popularized by GPTCache), or a dedicated semantic caching layer. The distinction matters: prompt caching saves cost/latency on the same conversation reusing the same context; semantic caching saves cost/latency across different users asking similar questions — much more powerful, but riskier.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase6-2.webp" alt="Diagram of two caching tiers: exact-match prompt caching on a static prefix within a session, and semantic caching by embedding similarity across users, plus the semantic-cache staleness trap and its TTL and event-driven invalidation mitigations." loading="lazy" />
-          <figcaption>The two caching tiers — exact-match prompt caching vs. cross-user semantic caching — and the staleness trap semantic caching introduces.</figcaption>
-        </figure>
-
-        <p class="lede-block" style="margin-top:0;"><strong>CI/CD for AI artifacts.</strong> Prompt versioning: prompts live in version control (or a dedicated prompt-management platform), tagged and deployed like code — meaning a prompt change goes through the same eval-gated promotion process as a code change, and must pass the Phase 5 eval suite before it's allowed into production. This is what prevents "someone tweaked the system prompt in the console and quality silently dropped." Vector index updates: blue/green deployment for the index — build the new index version alongside the old one, validate retrieval quality against the eval set, and only then do an atomic swap to the new version. This avoids the failure mode of serving a half-updated index (some documents re-indexed, some not) mid-update, which produces inconsistent, confusing retrieval results.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase6-3.webp" alt="Diagram of treating prompts as first-class code artifacts with a Git-based eval-gated merge pipeline and tagged rollbacks, plus blue/green vector index deployment with an atomic swap to avoid a half-indexed state." loading="lazy" />
-          <figcaption>Prompts as code — the eval-gated CI pipeline and rollback path — and blue/green vector index deployment via atomic swap.</figcaption>
-        </figure>
-
-        <h4>tooling &amp; tech stack</h4>
-        <ul>
-          <li><strong>Gateways:</strong> LiteLLM Proxy (the most commonly adopted open-source option, extending the routing library from Phase 2 into a full proxy service), Kong AI Gateway, Portkey, Cloudflare AI Gateway, or AWS Bedrock's built-in cross-region inference/failover for an already-AWS-native stack — often the lowest-friction starting point before reaching for a separate gateway product.</li>
-          <li><strong>Caching:</strong> Redis for both exact and semantic caching, native provider prompt-caching APIs (Anthropic and OpenAI both expose this directly), and GPTCache as a purpose-built semantic caching library for more out-of-the-box tooling than building the Redis + similarity-check logic from scratch.</li>
-          <li><strong>CI/CD:</strong> GitHub Actions/GitLab CI running promptfoo/Ragas eval suites as a merge gate — the mechanism that turns Phase 5's evaluation harness into an enforced deployment gate rather than a manual check. Terraform for infra-as-code on the vector DB and inference cluster resources.</li>
-          <li><strong>Serving infra:</strong> vLLM/TGI running on Kubernetes via KServe or Ray Serve for self-hosted models with GPU autoscaling — directly analogous to running any autoscaled workload on EKS, just with GPU-aware scheduling instead of CPU-based. Managed endpoints (Bedrock, Vertex AI) trade some control for dramatically reduced ops burden — worth defaulting to unless there's a specific reason (data residency, cost at extreme scale, custom fine-tuned model) to self-host.</li>
-        </ul>
-
-        <h4>trade-offs &amp; challenges</h4>
-        <div class="trade-off"><strong>Failover correctness:</strong> naively failing over to a different model provider mid-conversation can silently change output quality, style, or even safety posture — a response from Provider B might be subtly different in tone, verbosity, or willingness to answer certain questions than what the user was getting from Provider A. Mitigation: only failover between models explicitly validated as equivalent-tier through the Phase 5 eval suite (not just "similarly priced" or "similarly named"), and log/flag every failover event so it's reviewable — if failovers are happening often, that's a signal worth investigating on its own, not just a resilience feature quietly working.</div>
-        <div class="trade-off"><strong>Cache staleness vs. hit rate:</strong> the direct risk that comes with semantic caching's power — aggressively caching by similarity means an outdated answer can get served when the underlying data has changed, even though the query is one that's been semantically seen before. Mitigation: bind cache entries to a TTL tied to the Phase 3 data-freshness SLA (if the staleness bound is 15 minutes, the cache shouldn't outlive that), and wire cache invalidation directly to source-document update events rather than relying purely on time-based expiry.</div>
-        <div class="trade-off"><strong>Rate-limit queueing under burst load:</strong> a naive retry-with-backoff strategy, applied uniformly across many concurrent requests, can actually make an outage worse — everyone backs off and retries in roughly the same window, creating a retry storm that hits the already-struggling provider with a synchronized burst right as it's recovering. Mitigation: circuit breakers (stop sending requests to a clearly failing provider instead of retrying blindly), jittered backoff (randomize retry timing so requests don't cluster), and load-shedding — deliberately rejecting or queueing lower-priority requests first during a degradation event, so the highest-priority traffic keeps getting served.</div>
-        <div class="trade-off"><strong>GPU cost vs. latency for self-hosted models:</strong> a classic capacity-planning tension, just with GPU economics instead of CPU — under-provisioned GPU pools cause request queueing and latency spikes exactly at peak traffic, the worst possible time; over-provisioned pools burn budget on idle GPU capacity, expensive hardware to leave sitting unused. Mitigation: autoscale on queue depth rather than raw CPU/GPU utilization (queue depth reflects actual user-facing pain — a full GPU that's still keeping up with demand doesn't need to scale), combined with scheduled scaling for traffic patterns already known to be predictable (e.g. business-hours usage in an enterprise assistant).</div>
-
-        <figure class="phase-figure">
-          <img src="images/phase6-4.webp" alt="Diagram of a retry-storm disaster under burst load cascading into a provider crash, the three-tier resilience shield of jittered exponential backoff, circuit breakers, and load shedding with priority queues, and the failover-drift trap of silently changing model voice mid-conversation." loading="lazy" />
-          <figcaption>How retry storms cascade into an outage, the three-tier resilience shield, and the failover-drift trap.</figcaption>
-        </figure>
-
-        <figure class="phase-figure">
-          <img src="images/phase6-5.webp" alt="Diagram comparing managed endpoints versus self-hosted Kubernetes for GPU capacity, the under- versus over-provisioning balancing act, and smart autoscaling on queue depth and P95 latency instead of raw GPU utilization." loading="lazy" />
-          <figcaption>Managed vs. self-hosted GPU capacity, the provisioning balancing act, and why queue depth beats raw utilization as an autoscaling signal.</figcaption>
-        </figure>
-
-        <p class="lede-block">The throughline: every mechanism here — the gateway, the two cache types, the CI/CD gates — exists to make change and failure survivable rather than catastrophic. This phase leans hard on infrastructure patterns already familiar from a traditional AWS/Kubernetes background; the genuinely new part is the specific failure modes (token-cost blowouts, semantic cache staleness, model-equivalence validation) that don't exist in traditional backend systems.</p>
-      </div>
-    </details>
-
-    <!-- PHASE 7 -->
-    <details class="phase">
-      <summary>
-        <div class="phase-head">
-          <span class="phase-num">PHASE 7</span>
-          <span class="phase-title">Monitoring, Observability &amp; Feedback Loops</span>
-        </div>
-        <span class="toggle-label"><span class="show-more">Read more</span><span class="show-less">Show less</span></span>
-      </summary>
-      <div class="phase-teaser">
-        <p>Closing the loop — knowing what the system is doing in production, catching degradation before users complain, feeding real signal back into evaluation.</p>
-      </div>
-      <div class="phase-body">
-        <p class="lede-block" style="margin-top:0;">Phase 6 made the system survive infrastructure failures. Phase 7 answers a different question: how do you know if the system is actually getting worse for reasons that have nothing to do with infrastructure — a subtly degrading model, a corpus that's drifted from what users are actually asking, hallucination creeping up quietly. This is the phase that closes the loop back into everything before it.</p>
-
-        <h4>phase objectives</h4>
-
-        <p class="lede-block" style="margin-top:0;"><strong>Know what the system is doing in production.</strong> Not "is it up" (that's Phase 6's job) — but "is each individual request behaving correctly, and can I reconstruct exactly what happened when something goes wrong?" The objective is full traceability, request by request.</p>
-
-        <p class="lede-block"><strong>Detect degradation before users complain.</strong> This is the objective that separates reactive operations from proactive ones. User complaints are a lagging indicator — by the time enough users notice and report something, a meaningful volume of degraded responses has likely already been served. The goal is catching the signal earlier than that.</p>
-
-        <p class="lede-block"><strong>Feed real-world signal back into evaluation and retraining.</strong> This is what makes Phase 7 a loop rather than a dead-end dashboard. Everything observed in production — feedback, flagged interactions, drift signals — should flow back into the Phase 5 eval set and, where relevant, into fine-tuning data. Without this feedback path, observability is just a read-only window; with it, the system actually improves over time based on real usage.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase7-1.webp" alt="Diagram of the observability mission — why uptime checks alone miss subtle degradation — and full-stack span-level tracing of a request through RAG retrieval, a tool call, generation, and a guardrail check, tied to the Phase 1 latency waterfall, plus the OpenTelemetry standard." loading="lazy" />
-          <figcaption>The observability mission and full-stack span-level tracing — the production-time verification of the Phase 1 latency waterfall.</figcaption>
-        </figure>
-
-        <h4>system components &amp; topologies</h4>
-
-        <p class="lede-block" style="margin-top:0;"><strong>Full-stack tracing.</strong> Every request gets captured as a trace, broken into spans — one span per meaningful step: retrieval, each individual tool call, each LLM call — with token counts, latency, and cost attached to each span individually, not just the request as a whole. Why span-level granularity specifically, rather than one aggregate log line per request: when something goes wrong (slow response, wrong answer, unexpectedly expensive request), it matters which step caused it. A request that took 6 seconds could be 5.5 seconds of retrieval and 0.5 seconds of generation, or the reverse — those point to completely different root causes and completely different people to page. This is the production-time realization of the Phase 1 latency waterfall: the budget was set per-hop at design time, and this is how it gets verified per-hop in reality.</p>
-
-        <p class="lede-block"><strong>Drift detection, three distinct kinds.</strong> Data drift — the distribution of incoming queries shifts away from what the system was designed/evaluated against; e.g. an internal knowledge assistant built for engineering questions starts seeing a growing share of HR questions after a company reorg, a distribution the system wasn't evaluated for. Embedding drift — the semantic distribution of retrieved content shifts over time, a signal that either the corpus itself has changed shape (lots of new documents in a previously underrepresented topic) or user intent has moved in a way that's pulling different parts of the index than before. Semantic/output drift — the model's responses gradually change in character (length, tone, hallucination rate) without any deployment on your side causing it; this is the specific, important case where an upstream provider silently updates the underlying model version behind an API, and the system's behavior shifts even though nothing changed on your end. Catching this requires monitoring outputs over time, not just inputs.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase7-2.webp" alt="Diagram of three drift types: data drift from a shifting query mix between engineering and HR topics, embedding drift shown as a moving cluster in vector space, and output/semantic drift from a silent upstream model update changing response length and tone." loading="lazy" />
-          <figcaption>The three kinds of drift — data, embedding, and output/semantic — and why user complaints are too lagging an indicator to catch them.</figcaption>
-        </figure>
-
-        <p class="lede-block" style="margin-top:0;"><strong>Hallucination tracking.</strong> Rather than treating faithfulness scoring (from Phase 5) as a one-time eval-suite check, it runs continuously as a sampled monitor against live production traffic — alerting when the faithfulness score trend drops below a threshold. This turns a pre-launch quality gate into an ongoing health metric.</p>
-
-        <p class="lede-block"><strong>Feedback capture.</strong> Explicit — thumbs up/down, a correction the user submits directly — clear signal, but low volume (most users don't bother clicking feedback buttons). Implicit — the user rephrased their query (a sign the first answer didn't land), abandoned the session, or escalated to a human — much higher volume, but noisier to interpret. Both get piped back into the eval golden-set pipeline (Phase 5) and, where the interaction is a good training example, into fine-tuning data (Phase 2's fine-tuning path).</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase7-2.webp" alt="Diagram of continuous sampled faithfulness monitoring catching a hallucination on a conveyor belt, explicit versus implicit feedback with their volume and signal trade-offs, and the labeling-queue pipeline gate routing flagged interactions to the Phase 5 golden eval dataset and Phase 2 fine-tuning dataset." loading="lazy" />
-          <figcaption>Continuous hallucination sampling, explicit vs. implicit feedback, and the labeling gate that routes flagged interactions back into eval and fine-tuning data.</figcaption>
-        </figure>
-
-        <h4>tooling &amp; tech stack</h4>
-        <ul>
-          <li><strong>Observability platforms:</strong> LangSmith, Arize Phoenix, Arize AX, Langfuse, Datadog LLM Observability, and Honeycomb (when instrumented with OpenTelemetry's GenAI semantic conventions) — these give the trace/span view described above, purpose-built for LLM call chains rather than generic APM.</li>
-          <li><strong>Tracing standard:</strong> OpenTelemetry (OTel), specifically its GenAI semantic conventions — the vendor-neutral instrumentation layer, meaning no lock-in to one observability platform's proprietary SDK. The same instrumentation discipline as distributed tracing in a microservices system (OTel spans across service calls), applied here to spans across retrieval &rarr; tool calls &rarr; generation instead of across services.</li>
-          <li><strong>Drift/anomaly detection:</strong> Arize or WhyLabs for embedding and data drift monitoring specifically; for a more DIY approach, statistical tests like Population Stability Index (PSI) or KL divergence run directly against embedding distributions over time windows.</li>
-          <li><strong>Feedback pipelines:</strong> product-side event logging (Segment/Amplitude) joined with trace IDs so a feedback event can be traced back to the exact request/response/context that produced it, feeding a labeling queue (Label Studio) where humans review flagged interactions before they're promoted into the eval set.</li>
-        </ul>
-
-        <figure class="phase-figure">
-          <img src="images/phase7-4.webp" alt="Diagram of the Phase 7 tech stack in four quadrants: AI observability and tracing platforms, drift and anomaly detection tools, feedback event pipelines joining product analytics to trace IDs, and human labeling with Label Studio feeding CI/CD prompt and retrieval gates." loading="lazy" />
-          <figcaption>The Phase 7 tech stack — observability and tracing, drift detection, feedback pipelines, and human labeling feeding the golden test set.</figcaption>
-        </figure>
-
-        <h4>trade-offs &amp; challenges</h4>
-        <div class="trade-off"><strong>Observability cost/volume:</strong> full tracing of every single request at high traffic volumes is genuinely expensive to store and query — trace storage costs scale with volume, and a busy production system generates a lot of it. Mitigation: tiered sampling — capture 100% of traces for errors or flagged/low-confidence content, and statistically sample the rest, while retaining the ability to force full-trace capture on demand (e.g. temporarily, when debugging a specific reported issue).</div>
-        <div class="trade-off"><strong>Drift alerts without action paths:</strong> detecting drift is close to useless if there's no defined owner and no defined response — an alert that fires and gets acknowledged but leads nowhere is worse than no alert, because it trains people to ignore alerts generally. Mitigation: every drift alert type maps to a documented runbook (re-index the corpus, re-tune router thresholds, escalate to the model provider if it's suspected output drift from their side) with a named owner, the same discipline applied to any production alert in a traditional system.</div>
-        <div class="trade-off"><strong>Feedback loop bias:</strong> relying only on explicit feedback overrepresents the extremes — users who are highly engaged (power users who bother to click thumbs-up) or highly frustrated (angry enough to leave negative feedback), while the large middle of "mostly satisfied, didn't bother to say anything" goes unrepresented. Mitigation: weight implicit signals more heavily in aggregate quality tracking, and run periodic blind quality sampling — pulling a random sample of production interactions for human review, independent of whether users flagged them — to get an unbiased read on actual quality.</div>
-        <div class="trade-off"><strong>Attribution across a multi-agent/multi-model system:</strong> when quality degrades in a system with multiple agents, multiple model tiers (from Phase 2's routing), and multiple prompt versions in flight, pinpointing which specific component caused the regression requires the span-level granularity described above — flat, aggregate request logging simply doesn't have the resolution to answer "was it the router misclassifying complexity, the retrieval step, or the new prompt version shipped yesterday?" This is the practical payoff of investing in proper tracing early rather than bolting it on after a production incident makes the gap obvious.</div>
-
-        <figure class="phase-figure">
-          <img src="images/phase7-5.webp" alt="Diagram of the observability latency and cost tax solved by tiered sampling, alert fatigue mitigated by mapping every drift alert to a runbook and owner, feedback loop bias from over-representing frustrated and power users, and the component-attribution guessing game in multi-agent systems without span-level tracing." loading="lazy" />
-          <figcaption>Four operational risks — the tracing cost tax, alert fatigue, feedback bias, and the attribution guessing game without span-level tracing.</figcaption>
-        </figure>
-
-        <p class="lede-block">That's Phase 7, and it closes the loop: the drift signals, faithfulness scores, and feedback captured here feed directly back into Phase 5's eval set, which gates Phase 6's CI/CD deployments, which in turn get observed again here. The system isn't "done" after launch — this phase is what makes continuous improvement a designed mechanism rather than something that happens by accident when someone notices a problem.</p>
-
-        <figure class="phase-figure">
-          <img src="images/phase7-6.webp" alt="Diagram of the continuous improvement flywheel: production runtime generates trace IDs and feedback, which get filtered and aggregated into human labeling queues, refine the Phase 5 golden test suite, and deploy with confidence through Phase 6 CI/CD gates back into production." loading="lazy" />
-          <figcaption>The continuous improvement flywheel — without a return path, monitoring is a read-only window; with it, the system gets better from real usage.</figcaption>
-        </figure>
-      </div>
-    </details>
-
-  </section>
-
-  <section class="capstone">
-    <div class="section-head">
-      <h2>Capstone Walkthrough</h2>
-      <span class="mono" style="color:var(--ink-soft);">Enterprise Knowledge &amp; Action Assistant</span>
-    </div>
-    <p class="prose">This is where everything from Phases 1&ndash;7 gets applied to one concrete system, so the decisions can be seen interlocking rather than existing as seven separate frameworks. Below: the scenario, then each phase's application, then the diagram — the reasoning at each step, not just the design restated.</p>
-
-    <h3 style="font-size:1.1rem; margin:28px 0 14px;">The scenario</h3>
-    <p class="prose">A single assistant that does three genuinely different things: answers employee questions from RBAC-scoped internal documents (RAG); answers live data questions via SQL tool-calling ("what's the status of order #4521"); and triggers real workflows ("submit a reimbursement request"). This is a good capstone because it forces every phase's decisions to interact with each other — a design choice in Phase 2 (how to route between these three) constrains Phase 4 (which agent topology handles each), which constrains Phase 5 (what guardrails each path needs), and so on. A toy single-purpose RAG bot wouldn't expose those interactions.</p>
-
-    <figure class="phase-figure">
-      <img src="images/capstone-1.webp" alt="Overview diagram of the enterprise knowledge and action assistant: the three-in-one scenario of document Q&A, SQL data lookup, and workflow triggers, and the end-to-end pipeline topology from employee through the API gateway, intent router, per-path backing stores, model gateway, guardrails, and the observed-and-improved feedback loop." loading="lazy" />
-      <figcaption>The scenario and the end-to-end pipeline topology — three execution paths converging on shared gateway, guardrail, and observability infrastructure.</figcaption>
-    </figure>
-
-    <h3 style="font-size:1.1rem; margin:28px 0 14px;">Applying the 7 phases</h3>
-
-    <p class="lede-block" style="margin-top:0;"><strong>Phase 1 &mdash; classification and NFRs.</strong> The first move is applying the deterministic/probabilistic split within this one system, because it's not uniform across the three capabilities. Document Q&amp;A is genuinely probabilistic — open-ended language understanding over unstructured content, needing an LLM. "What's my PTO balance" looks like a natural-language question but is actually a deterministic lookup wearing conversational clothing — the LLM's job is narrow: understand the request and phrase the response, not "reason" about the answer; the actual data fetch is a direct SQL/API call with one correct answer. This distinction is why the system isn't "one RAG pipeline" — it's three different execution paths sharing infrastructure, decided at Phase 1 and made concrete at Phase 2. NFRs get set per path, because they're not uniform either: RAG queries tolerate more latency (users expect "let me look that up" to take a moment) at TTFT &lt; 800ms and p95 &lt; 4s, while SQL lookups are expected to feel instant — p95 &lt; 2s — because the user's mental model is "this is just a database question," even though an LLM is involved in phrasing it.</p>
-
-    <p class="lede-block"><strong>Phase 2 &mdash; routing and model tiering.</strong> A router classifies incoming intent into one of three buckets: knowledge_query, data_query, action_trigger. This router is the decision-tree gate from Phase 1, made concrete — the component that actually enforces "don't send deterministic work through the expensive probabilistic path." Model tiering follows the complexity of each path, not a single system-wide model choice: knowledge queries (RAG) get a mid-tier model — enough reasoning capability to synthesize an answer from retrieved chunks, without paying for a top-tier model's cost on every document lookup; data/action queries get a fast, cheap model — because the task is precise structured tool-calling (generate the right SQL, call the right function with the right arguments), not creative synthesis, so accuracy on structure matters far more than reasoning depth; complex cross-domain questions ("compare this quarter's expenses against last quarter and explain the variance," touching both RAG and SQL) escalate to the largest model, because this genuinely needs multi-step planning across data sources. This is the cascade pattern from Phase 2 applied concretely: cheap and fast for narrow, structured tasks, expensive and capable reserved for genuinely complex reasoning.</p>
-
-    <p class="lede-block"><strong>Phase 3 &mdash; retrieval and governance.</strong> The document corpus is ingested with ACL metadata tagged per source system — HR documents tagged with HR access scope, Legal with Legal's, Finance with Finance's. Hybrid retrieval (BM25 + vector) applies the RBAC filter at query time, meaning the enforcement point from Phase 3 — pre-filter, not post-filter — is what guarantees a query never even scores documents outside the requesting employee's access scope. An employee in Sales asking a cleverly-phrased question can't surface HR salary data, because those chunks are never candidates for retrieval in the first place, not because a downstream filter caught them.</p>
-
-    <p class="lede-block"><strong>Phase 4 &mdash; orchestration.</strong> A LangGraph orchestrator with three nodes maps directly onto the three intent buckets from Phase 2. Retriever node: runs the RAG pipeline. SQL Tool Agent: parameterized, running under a read-only database role, with schema-validated queries — the deterministic-execution principle from Phase 4 applied directly, the LLM decides what to query, but the execution is constrained to a role that can't write or delete, regardless of what the model generates. Workflow Trigger Agent: writes are idempotent (an idempotency key per submitted request, so a retried "submit reimbursement" call doesn't create a duplicate), and — critically — requires an explicit user confirmation step before executing, the human-in-the-loop interrupt pattern from Phase 4: anything with real side effects pauses for confirmation rather than executing autonomously. Memory splits the same way Phase 4 specified: short-term session buffer for conversation coherence, long-term memory for standing user preferences ("always show me EMEA numbers first") that should persist across sessions without needing to be re-stated.</p>
-
-    <p class="lede-block"><strong>Phase 5 &mdash; guardrails.</strong> Two guardrails are worth highlighting because they're tailored to this system's specific risks, not generic. Every SQL-generating call passes through a guardrail that allow-lists read-only query patterns against the known schema — a much stronger defense than a generic toxicity/safety classifier, because the actual risk here is a hallucinated or malicious query attempting a write or an unauthorized join, not offensive language. RAG answers run through the faithfulness check before returning — verifying the answer is actually grounded in the retrieved chunks, not embellished. Workflow-trigger actions get logged as high-risk spans regardless of whether the guardrail passed — because a passed guardrail check isn't the same as "this was definitely the right action to take"; high-risk actions deserve audit visibility independent of automated checks clearing them.</p>
-
-    <figure class="phase-figure">
-      <img src="images/capstone-2.webp" alt="Diagram covering Phases 1 through 5 applied to the capstone: intent router tiering knowledge, data, and multi-domain queries to different model sizes; RBAC pre-filtering blocking a Sales employee from HR documents inside the vector DB; and secure SQL execution against a read replica plus idempotent, confirmation-gated workflow triggers." loading="lazy" />
-      <figcaption>Phases 1&ndash;5 in the capstone — routing and model tiering, pre-filtered RBAC retrieval, and secure SQL/workflow execution.</figcaption>
-    </figure>
-
-    <p class="lede-block" style="margin-top:0;"><strong>Phase 6 &mdash; infrastructure.</strong> The model gateway sits in front of the router with failover between two providers — applying the equivalence-validated failover principle from Phase 6, not a naive "just try the other one" fallback. Semantic caching is applied specifically to the knowledge-query path, because enterprise FAQ-style questions repeat heavily ("what's our WFH policy") — exactly the pattern semantic caching is good at, and it wouldn't make sense to apply the same caching strategy to the SQL/action paths, where answers are user-specific and shouldn't be cached across users at all. Prompt/router CI gates block any change that regresses the eval suite. The vector index updates incrementally every 15 minutes via CDC — the freshness/cost trade-off from Phase 3, made concrete with an actual number.</p>
-
-    <p class="lede-block"><strong>Phase 7 &mdash; observability.</strong> Full OTel tracing with span breakdown per request — router decision, retrieval, tool call, generation — so a slow or wrong response can be attributed to the exact step, exactly as the Phase 7 rationale described. Faithfulness scoring runs on 100% of RAG responses rather than sampled, because at this system's volume it's cheap enough — a direct application of the tiered-sampling trade-off from Phase 7 (sample when volume makes 100% expensive; don't sample when it doesn't). Explicit thumbs-down feedback routes to a human review queue and folds into the golden eval set weekly, closing the loop back into Phase 5.</p>
-
-    <figure class="phase-figure">
-      <img src="images/capstone-3.webp" alt="Diagram covering Phases 6 and 7 applied to the capstone: the model gateway routing around a rate-limited provider to a verified equivalent failover with semantic caching on the knowledge path and no caching on SQL, and full-stack OTel tracing feeding a reinforcement loop from thumbs-down feedback through human review into the golden eval dataset and CI/CD regression gates." loading="lazy" />
-      <figcaption>Phases 6&ndash;7 in the capstone — gateway failover and path-specific caching, and the reinforcement loop from live traffic back into eval gates.</figcaption>
-    </figure>
-
-    <h3 style="font-size:1.1rem; margin:32px 0 10px;">Reading the architecture diagram</h3>
-    <p class="prose">Walking the diagram top to bottom, each layer corresponds to one phase's decisions. <strong>Employee &rarr; API Gateway (AuthN/AuthZ) &rarr; Intent Router:</strong> the gateway establishes identity and roles before anything else happens — this is what makes RBAC filtering possible downstream; the system has to know who is asking before it can decide what they're allowed to retrieve. <strong>Intent Router &rarr; [RAG Retriever | SQL Tool-Calling | Workflow Trigger]:</strong> this is Phase 2's routing decision made structural — three genuinely separate execution paths, not one generic "agent" that decides everything ad hoc per request. <strong>Each path &rarr; its own backing store</strong> (Vector DB / SQL read replica / Workflow engine): notice the SQL path hits a read replica, not the primary database — a detail worth internalizing, probabilistic, LLM-driven query generation should never hit a primary transactional database directly, regardless of how well-guardrailed it is; the replica is a blast-radius containment decision, independent of the guardrails themselves. <strong>All paths converge &rarr; Model Gateway &rarr; LLM (routed by complexity) &rarr; Output Guardrails &rarr; Response:</strong> this convergence point is deliberate — regardless of which of the three paths a request took, it passes through the same gateway, caching layer, and guardrail stack before reaching the user, which is what makes Phase 6's and Phase 5's components reusable infrastructure rather than three separately-built guardrail systems; the safety and resilience layer gets built once, and every path benefits. <strong>Response &rarr; Observability &amp; Feedback Loop:</strong> this closes back to Phase 7, and notably it's drawn as a loop, not a dead end — the drift detection, hallucination sampling, and feedback capture here feed back into the eval golden set (Phase 5) and the routing/model decisions (Phase 2), which is what makes this a system that improves over time rather than a static deployment.</p>
-
-    <p class="diagram-cap">Scroll horizontally to see the full diagram.</p>
-    <div class="diagram-scroll">
-<pre>                                   ┌───────────────────────────┐
-                                   │        Employee (UI)       │
-                                   │  Web / Slack / Teams App   │
-                                   └──────────────┬─────────────┘
-                                                  │  HTTPS
-                                                  ▼
-                                   ┌───────────────────────────┐
-                                   │        API Gateway /       │
-                                   │   AuthN (SSO/OIDC) + AuthZ │
-                                   └──────────────┬─────────────┘
-                                                  │  user identity + roles
-                                                  ▼
-                                   ┌───────────────────────────┐
-                                   │      Intent Router          │
-                                   │  (classifier: knowledge /   │
-                                   │   data-query / action)      │
-                                   └───┬───────────┬─────────┬──┘
-                    ┌──────────────────┘           │         └───────────────────┐
-                    ▼                              ▼                             ▼
-      ┌───────────────────────┐     ┌───────────────────────────┐   ┌───────────────────────────┐
-      │   RAG Retriever Node   │     │    SQL Tool-Calling Node   │   │  Workflow Trigger Node    │
-      │  - Hybrid search       │     │  - Schema-validated SQL    │   │  - Idempotent action call │
-      │    (BM25 + Vector)     │     │  - Read-only DB role       │   │  - User confirmation gate │
-      │  - RBAC/ABAC filter    │     │  - Guardrail: allow-list   │   │  - Idempotency key        │
-      │    at query time       │     │    query patterns only     │   │                           │
-      └───────────┬────────────┘     └──────────────┬─────────────┘   └──────────────┬────────────┘
-                  │                                  │                                │
-                  ▼                                  ▼                                ▼
-      ┌───────────────────────┐     ┌───────────────────────────┐   ┌───────────────────────────┐
-      │  Vector DB (ACL-tagged)│     │   Live Business DB (SQL)   │   │  Workflow Engine (e.g.,   │
-      │  + Keyword Index       │     │   (read replica)           │   │  Temporal / Step Functions)│
-      └───────────┬────────────┘     └──────────────┬─────────────┘   └──────────────┬────────────┘
-                  │                                  │                                │
-                  └──────────────────┬───────────────┴────────────────┬───────────────┘
-                                     ▼                                ▼
-                          ┌───────────────────────────────────────────────────┐
-                          │                Model Gateway                       │
-                          │  - Multi-provider routing &amp; failover               │
-                          │  - Prompt caching + Semantic cache (Redis)         │
-                          │  - Rate-limit queueing                             │
-                          └───────────────────────┬─────────────────────────────┘
-                                                  ▼
-                          ┌───────────────────────────────────────────────────┐
-                          │              LLM (routed by complexity)            │
-                          │      Small/fast model  ⇄  Large/reasoning model    │
-                          └───────────────────────┬─────────────────────────────┘
-                                                  ▼
-                          ┌───────────────────────────────────────────────────┐
-                          │            Output Guardrails                       │
-                          │  - Faithfulness check (RAG triad)                  │
-                          │  - PII / toxicity / format validation              │
-                          └───────────────────────┬─────────────────────────────┘
-                                                  ▼
-                                   ┌───────────────────────────┐
-                                   │     Response to Employee   │
-                                   └──────────────┬─────────────┘
-                                                  │
-                                                  ▼
-                          ┌───────────────────────────────────────────────────┐
-                          │         Observability &amp; Feedback Loop              │
-                          │  OTel Tracing → LangSmith/Phoenix                  │
-                          │  Drift detection · Hallucination sampling          │
-                          │  Explicit/implicit feedback → Eval golden set      │
-                          └─────────────────────────────────────────────────────┘</pre>
-    </div>
-<figure class="phase-figure">
-      <img src="images/capstone-4.png" alt="Diagram covering Phases 6 and 7 applied to the capstone: the model gateway routing around a rate-limited provider to a verified equivalent failover with semantic caching on the knowledge path and no caching on SQL, and full-stack OTel tracing feeding a reinforcement loop from thumbs-down feedback through human review into the golden eval dataset and CI/CD regression gates." loading="lazy" />
-      <figcaption>Phases 6&ndash;7 in the capstone — gateway failover and path-specific caching, and the reinforcement loop from live traffic back into eval gates.</figcaption>
-    </figure>
-
-    <div class="callout">
-      <p><strong>Why this design holds up under interview scrutiny:</strong> the point worth taking away from the whole capstone is that a staff-level interviewer isn't scoring for whether a vector DB box and an LLM box got drawn. They're checking whether every arrow in that diagram can be explained — what breaks if this connection isn't here — why the SQL path hits a replica and not primary, why RBAC filtering happens inside the vector DB query and not after, why workflow triggers pause for confirmation while RAG answers don't. Each of those is a specific failure mode from one of the seven phases, and the diagram is really just a compressed record of seven phases' worth of "here's what goes wrong, and here's the decision that prevents it."</p>
-    </div>
-  </section>
-
+<div class="author-strip">
+  <div class="avatar">AS</div>
+  <div class="who">
+    <span class="name">Abhinav Srivastava</span>
+    <span class="role">Lead Engineer · 12+ yrs enterprise .NET &amp; AWS · building AI agents with Microsoft Agent Framework</span>
+  </div>
+  <div class="links">
+    <a href="https://devwithabhinav.in/profile/index.html">full profile ↗</a>
+    <a href="mailto:devwithabhinav@gmail.com">email</a>
+    <a href="https://www.linkedin.com/in/abhinav-srivastava-27aaa072/">linkedin</a>
+    <a href="https://github.com/devwithabhinav">github</a>
+  </div>
 </div>
 
-<footer>
-  <div class="wrap">
-    <div class="mono">devwithabhinav.in &nbsp;&middot;&nbsp; AI System Design &amp; SDLC &nbsp;&middot;&nbsp; <a href="index.html">back to profile</a></div>
-  </div>
-</footer>
+<div class="shell">
+  <nav class="rail" aria-label="Phase navigation" id="rail">
+    <a href="#phase-1" class="phase-link" data-target="phase-1"><span class="dot"></span><span class="lbl">01</span></a>
+    <span class="track"></span>
+    <a href="#phase-2" class="phase-link" data-target="phase-2"><span class="dot"></span><span class="lbl">02</span></a>
+    <span class="track"></span>
+    <a href="#phase-3" class="phase-link" data-target="phase-3"><span class="dot"></span><span class="lbl">03</span></a>
+    <span class="track"></span>
+    <a href="#phase-4" class="phase-link" data-target="phase-4"><span class="dot"></span><span class="lbl">04</span></a>
+    <span class="track"></span>
+    <a href="#phase-5" class="phase-link" data-target="phase-5"><span class="dot"></span><span class="lbl">05</span></a>
+    <span class="track"></span>
+    <a href="#phase-6" class="phase-link" data-target="phase-6"><span class="dot"></span><span class="lbl">06</span></a>
+    <span class="track"></span>
+    <a href="#phase-7" class="phase-link" data-target="phase-7"><span class="dot"></span><span class="lbl">07</span></a>
+    <span class="track"></span>
+    <a href="#capstone" class="phase-link" data-target="capstone"><span class="cs-mk"></span><span class="lbl">CS</span></a>
+  </nav>
+
+  <main>
+    <div class="col">
+
+    <!-- ============ PHASE 1 ============ -->
+    <section class="phase" id="phase-1">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 01 / 07</span></div>
+      <h1 class="title">Requirements, Scoping &amp; Feasibility Analysis</h1>
+      <p class="lede">The single most expensive mistake in AI system design is applying a probabilistic engine to a deterministic problem — this phase exists to catch that before any architecture work starts.</p>
+
+      <div class="gist">
+        <span class="gist-label">the gist</span>
+        <p class="gist-line">Before drawing a single box, decide honestly whether this problem even needs an LLM — and write down the cost and latency numbers that will constrain every choice after this one.</p>
+        <div class="stat-row">
+          <div class="stat"><b>60–80%</b><span>cost cut from routing deterministic traffic away from the LLM</span></div>
+          <div class="stat"><b>3–5x</b><span>output tokens priced vs. input tokens</span></div>
+          <div class="stat"><b>2,580ms</b><span>example end-to-end latency budget, hop by hop</span></div>
+        </div>
+      </div>
+
+      <p>Most production AI failures trace back to skipping this phase — teams reach for an LLM because it's exciting, not because the problem demands probabilistic reasoning. Everything downstream — cost, latency, reliability — gets harder to fix later than to prevent here.</p>
+
+      <h2 class="section">phase objectives</h2>
+      <div class="card"><h3>Deterministic vs. probabilistic classification</h3><p>Does this task have one correct, computable answer given the inputs? "What's this customer's account balance?" is a database query — deterministic. "Summarize this contract's risk clauses" has no single correct string — that's where LLMs earn their cost. Get it wrong either direction and the system either becomes an unreliable, expensive lookup table, or breaks the moment inputs vary from what was anticipated.</p></div>
+
+      <figure class="diagram">
+        <div class="fig-head"><span>fig. 1.1</span><span>deterministic / probabilistic gate</span></div>
+        <svg viewBox="0 0 680 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing an incoming request splitting at a decision gate into a deterministic path routed to a rules engine, and a probabilistic path routed to an LLM call.">
+          <defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--muted)"></path></marker></defs>
+          <rect x="20" y="40" width="140" height="40" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect>
+          <text x="90" y="65" text-anchor="middle" font-family="Space Grotesk" font-size="13" fill="var(--ink)">request</text>
+          <line x1="160" y1="60" x2="230" y2="60" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a1)"></line>
+          <polygon points="250,30 340,60 250,90 160,60" fill="var(--signal-bg)" stroke="var(--signal)" stroke-width="1.5"></polygon>
+          <text x="250" y="55" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="600" fill="var(--signal-ink)">one correct,</text>
+          <text x="250" y="70" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="600" fill="var(--signal-ink)">computable answer?</text>
+          <line x1="340" y1="60" x2="400" y2="60" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a1)"></line>
+          <text x="400" y="45" font-family="IBM Plex Mono" font-size="10" fill="var(--signal)">yes</text>
+          <rect x="440" y="20" width="220" height="52" rx="2" fill="var(--paper-raised)" stroke="var(--signal)" stroke-width="1.5"></rect>
+          <text x="550" y="42" text-anchor="middle" font-family="Space Grotesk" font-size="13" font-weight="600" fill="var(--ink)">Rules engine / lookup</text>
+          <text x="550" y="60" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">no LLM involved</text>
+          <line x1="370" y1="90" x2="430" y2="150" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a1)"></line>
+          <text x="380" y="130" font-family="IBM Plex Mono" font-size="10" fill="var(--warn)">no</text>
+          <rect x="440" y="140" width="220" height="52" rx="2" fill="var(--warn-bg)" stroke="var(--warn)" stroke-width="1.5"></rect>
+          <text x="550" y="162" text-anchor="middle" font-family="Space Grotesk" font-size="13" font-weight="600" fill="var(--ink)">Model call (LLM)</text>
+          <text x="550" y="180" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">genuinely ambiguous cases</text>
+        </svg>
+        <figcaption>The decision-tree gate: every request is classified before it's ever allowed to reach a model call.</figcaption>
+      </figure>
+
+      <div class="card"><h3>Token economics, ROI modeling &amp; NFRs</h3><p>What does one interaction cost — input plus output tokens (output runs 3–5x pricier) times expected volume? Does the system beat the alternative on cost? TTFT, throughput and latency budget need to be derived from real user expectations before architecture decisions get made — a 500ms budget eliminates most multi-hop agentic RAG designs before a box gets drawn.</p></div>
+
+      <h2 class="section">system components &amp; topologies</h2>
+      <div class="card"><h3>The latency budget waterfall</h3><p>Instead of one number ("under 3 seconds"), the budget is allocated across every hop. Breaking it down at design time means that when the SLA is violated in production, the team knows exactly where to look — without it, debugging latency becomes archaeology.</p></div>
+
+      <figure class="diagram">
+        <div class="fig-head"><span>fig. 1.2</span><span>latency budget waterfall — 2,580ms total</span></div>
+        <svg viewBox="0 0 680 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Waterfall bar chart allocating latency budget across Network 50ms, Auth 30ms, Retrieval 400ms, Generation 2000ms, and Post-processing 100ms.">
+          <g font-family="Space Grotesk" font-size="11.5" fill="var(--ink)">
+            <rect x="16" y="34" width="14" height="22" fill="var(--signal)"></rect><text x="38" y="50">Network — 50ms</text>
+            <rect x="16" y="62" width="18" height="22" fill="var(--signal)"></rect><text x="42" y="78">Auth — 30ms</text>
+            <rect x="16" y="90" width="130" height="22" fill="var(--signal)" opacity="0.75"></rect><text x="154" y="106">Retrieval — 400ms</text>
+            <rect x="16" y="118" width="440" height="22" fill="var(--warn)"></rect><text x="466" y="134">Generation — 2000ms</text>
+            <rect x="16" y="146" width="40" height="22" fill="var(--signal)" opacity="0.55"></rect><text x="64" y="162">Post-processing — 100ms</text>
+          </g>
+        </svg>
+        <figcaption>Generation dominates the budget — exactly why streaming and model-tier choice matter most in Phase 2.</figcaption>
+      </figure>
+
+      <h2 class="section">tooling &amp; tech stack</h2>
+      <div class="tool-list">
+        <div class="tool-item"><span class="tool-chip">Helicone / Langfuse</span><p>Cost modeling in a spreadsheet seeded with real provider pricing; validated post-launch.</p></div>
+        <div class="tool-item"><span class="tool-chip">Jira/Linear + ADRs</span><p>Requirements tracking plus a short markdown Architecture Decision Record — the answer, six months later, to "why didn't we just fine-tune?"</p></div>
+        <div class="tool-item"><span class="tool-chip">Little's Law + k6/Locust</span><p>Back-of-envelope throughput math on paper, validated later with real load tests.</p></div>
+      </div>
+
+      <h2 class="section">trade-offs &amp; challenges</h2>
+      <div class="warn-card"><h3><span class="mk"></span>The "let's use an LLM" trap</h3><p>99% correct isn't acceptable for arithmetic that used to be a formula. Mitigation: require written justification any time probabilistic logic touches a compliance-sensitive computation.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>TTFT vs. throughput tension</h3><p>Streaming holds a connection open for the whole generation, straining the pool under concurrency. Mitigation: multiplexed protocols like SSE over raw long-lived sockets.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>Cost model blind spots</h3><p>Agentic/retry flows have a fatter cost tail — budget on P90, not average. Output tokens, priced 3–5x higher, make prompt-only estimates look artificially cheap.</p></div>
+
+      <div class="phase-end"><span>Next</span><span class="next">Phase 02 → Architectural Decision Frameworks &amp; Model Selection</span></div>
+    </section>
+
+    <!-- ============ PHASE 2 ============ -->
+    <section class="phase" id="phase-2">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 02 / 07</span></div>
+      <h1 class="title">Architectural Decision Frameworks &amp; Model Selection</h1>
+      <p class="lede">Phase 1 told you whether to use an LLM. Phase 2 commits you to which technique and which model — and to a decision-making process you can defend later, not "we picked GPT-4 because everyone does."</p>
+
+      <div class="gist">
+        <span class="gist-label">the gist</span>
+        <p class="gist-line">Climb the technique ladder one rung at a time — pick the minimum viable technique that meets the NFRs, and force a justification before reaching for the next, more expensive rung.</p>
+        <div class="stat-row">
+          <div class="stat"><b>5 rungs</b><span>Prompt Eng. → RAG → GraphRAG → Fine-Tuning → RLHF/DPO</span></div>
+          <div class="stat"><b>5 axes</b><span>the decision-matrix score: freshness, specificity, latency, cost, explainability</span></div>
+        </div>
+      </div>
+
+      <h2 class="section">phase objectives</h2>
+      <div class="card"><h3>Build vs. Buy, and technique selection</h3><p>"Train from scratch" is almost never right for application teams — the real decision is API vs. self-hosted OSS, hinging on data sensitivity, cost at scale, and latency control. Teams reach for fine-tuning because it feels like "real ML work," when prompt engineering or RAG would solve the actual problem more cheaply.</p></div>
+      <div class="card"><h3>Multi-model routing strategy</h3><p>Not every query deserves the most expensive, most capable model. A routing policy decides, per request, which model handles it — based on task complexity, context window, and cost target. This is a deliverable in its own right, even if implemented as a simple classifier.</p></div>
+
+      <figure class="diagram">
+        <div class="fig-head"><span>fig. 2.1</span><span>cascade model router</span></div>
+        <svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of a query passing through a cheap classifier that routes to a fast small model, a code-specialized model, or a frontier large model depending on complexity.">
+          <rect x="16" y="80" width="120" height="40" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect>
+          <text x="76" y="105" text-anchor="middle" font-family="Space Grotesk" font-size="12.5" fill="var(--ink)">query</text>
+          <line x1="136" y1="100" x2="196" y2="100" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a1)"></line>
+          <rect x="200" y="76" width="150" height="48" rx="2" fill="var(--signal-bg)" stroke="var(--signal)" stroke-width="1.5"></rect>
+          <text x="275" y="96" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="600" fill="var(--signal-ink)">cheap classifier</text>
+          <text x="275" y="112" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">complexity tier?</text>
+          <line x1="350" y1="90" x2="420" y2="30" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+          <line x1="350" y1="100" x2="420" y2="100" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+          <line x1="350" y1="112" x2="420" y2="172" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+          <rect x="424" y="10" width="230" height="38" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect>
+          <text x="539" y="34" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="var(--ink)">Haiku-class — simple/short</text>
+          <rect x="424" y="80" width="230" height="38" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect>
+          <text x="539" y="104" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="var(--ink)">code-specialized model</text>
+          <rect x="424" y="152" width="230" height="38" rx="2" fill="var(--warn-bg)" stroke="var(--warn)" stroke-width="1.5"></rect>
+          <text x="539" y="176" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="var(--ink)">Opus-class — complex reasoning</text>
+        </svg>
+        <figcaption>The router itself must be cheap — a small model or non-LLM classifier — or it erases the savings it's supposed to create.</figcaption>
+      </figure>
+
+      <h2 class="section">system components &amp; topologies</h2>
+      <div class="card"><h3>The decision matrix</h3><p>Score the problem 1–5 across five axes. Static facts + tone shift → Prompt Engineering. External/frequently-changing knowledge → RAG. Multi-hop reasoning over interconnected entities → GraphRAG. Durably changing behavior or format → Fine-tuning/LoRA.</p></div>
+
+      <h2 class="section">tooling &amp; tech stack</h2>
+      <div class="tool-list">
+        <div class="tool-item"><span class="tool-chip">Claude / OpenAI / Gemini</span><p>Proprietary APIs — frontier capability, managed reliability, zero infra overhead.</p></div>
+        <div class="tool-item"><span class="tool-chip">Llama / Mistral / Qwen</span><p>Self-hosted OSS, served via vLLM, TGI, or Ray Serve — full data residency, own the ops burden.</p></div>
+        <div class="tool-item"><span class="tool-chip">LoRA / QLoRA — PEFT, Axolotl</span><p>Parameter-efficient fine-tuning, dramatically cheaper than full fine-tuning.</p></div>
+        <div class="tool-item"><span class="tool-chip">LiteLLM / OpenRouter / Martian</span><p>Model-agnostic routing gateways behind a unified API.</p></div>
+        <div class="tool-item"><span class="tool-chip">Neo4j / GraphRAG / Neptune</span><p>Graph databases and entity/relationship extraction for GraphRAG.</p></div>
+      </div>
+
+      <h2 class="section">trade-offs &amp; challenges</h2>
+      <div class="warn-card"><h3><span class="mk"></span>RAG vs. fine-tuning confusion</h3><p>The rule of thumb worth memorizing: RAG for facts, fine-tuning for format/voice/task-specialization. Fine-tuning to "teach the model the product catalog" is almost always a RAG problem in disguise.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>Vendor lock-in risk</h3><p>Hardcoding to one provider's quirks means switching later means rewriting application logic. Mitigation: abstract behind a gateway with provider-agnostic schemas.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>Router misclassification</h3><p>A router sending a complex query to a cheap model doesn't error — it silently returns a worse answer. Mitigation: default to the larger model when confidence is low, and validate with shadow-routing.</p></div>
+
+      <div class="throughline">The throughline: what's the cheapest thing that actually works? Prove it before scaling.</div>
+      <div class="phase-end"><span>Next</span><span class="next">Phase 03 → Data Engineering, Vectorization &amp; Governance</span></div>
+    </section>
+
+    <!-- ============ PHASE 3 ============ -->
+    <section class="phase" id="phase-3">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 03 / 07</span></div>
+      <h1 class="title">Data Engineering, Vectorization &amp; Governance</h1>
+      <p class="lede">Building the retrieval substrate that grounds the system in truth — and enforcing access control at the retrieval layer, not just the UI.</p>
+
+      <div class="gist">
+        <span class="gist-label">the gist</span>
+        <p class="gist-line">Most "the AI gave a wrong answer" bugs don't come from the model — they come from bad retrieval feeding it bad context. Filter access before scoring, never after.</p>
+        <div class="stat-row">
+          <div class="stat"><b>pre-filter</b><span>ACL applied inside the vector DB query, not after</span></div>
+          <div class="stat"><b>15 min</b><span>a typical documented staleness SLA</span></div>
+        </div>
+      </div>
+
+      <h2 class="section">phase objectives</h2>
+      <div class="card"><h3>Ingestion — idempotent, incremental, lineage-tracked</h3><p>Idempotent: re-running the pipeline shouldn't duplicate vectors. Incremental: the whole corpus shouldn't need reprocessing on every change. Lineage-tracked: every chunk traces back to its source, version, and ingestion timestamp.</p></div>
+      <div class="card"><h3>Chunking + embedding tuned to domain structure</h3><p>A legal contract, a Slack export, and an API reference have completely different natural units of meaning — getting this wrong is one of the most common causes of vague, fragmented RAG answers.</p></div>
+      <div class="card"><h3>Hybrid retrieval, tuned for recall and precision</h3><p>Vector search alone misses exact-match cases (a SKU, an error code); keyword search alone misses semantic paraphrases. Combine both, plus graph traversal when Phase 2 calls for it.</p></div>
+
+      <h2 class="section">system components &amp; topologies</h2>
+      <div class="card"><h3>Governance enforcement point — pre-filter, not post-filter</h3><p>ACL/metadata filters apply inside the vector DB query itself, restricting which vectors are even scored — never as a step run after retrieval to strip out unauthorized results. This is the single most consequential point in the whole phase.</p></div>
+
+      <figure class="diagram">
+        <div class="fig-head"><span>fig. 3.1</span><span>pre-filter vs. post-filter</span></div>
+        <svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Comparison diagram: post-filtering retrieves top-20 results then strips unauthorized ones afterward, risking leakage; pre-filtering restricts the candidate set before scoring, so restricted documents are never retrieved at all.">
+          <text x="16" y="24" font-family="IBM Plex Mono" font-size="11" fill="var(--warn)">bad — post-filter</text>
+          <rect x="16" y="34" width="150" height="34" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect>
+          <text x="91" y="55" text-anchor="middle" font-family="Space Grotesk" font-size="11.5" fill="var(--ink)">score top-20</text>
+          <line x1="166" y1="51" x2="216" y2="51" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+          <rect x="220" y="34" width="160" height="34" rx="2" fill="var(--warn-bg)" stroke="var(--warn)" stroke-width="1.5"></rect>
+          <text x="300" y="55" text-anchor="middle" font-family="Space Grotesk" font-size="11.5" fill="var(--ink)">strip unauthorized</text>
+          <text x="400" y="55" font-family="IBM Plex Mono" font-size="10" fill="var(--warn)">← leakage risk</text>
+
+          <text x="16" y="110" font-family="IBM Plex Mono" font-size="11" fill="var(--signal)">good — pre-filter</text>
+          <rect x="16" y="120" width="150" height="34" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect>
+          <text x="91" y="141" text-anchor="middle" font-family="Space Grotesk" font-size="11.5" fill="var(--ink)">ACL filter first</text>
+          <line x1="166" y1="137" x2="216" y2="137" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+          <rect x="220" y="120" width="160" height="34" rx="2" fill="var(--signal-bg)" stroke="var(--signal)" stroke-width="1.5"></rect>
+          <text x="300" y="141" text-anchor="middle" font-family="Space Grotesk" font-size="11.5" fill="var(--ink)">score allowed only</text>
+          <text x="400" y="141" font-family="IBM Plex Mono" font-size="10" fill="var(--signal-ink)">← never in candidate set</text>
+        </svg>
+        <figcaption>Restricted documents are never retrieved, scored, or seen by the model — there's no path for leakage.</figcaption>
+      </figure>
+
+      <div class="card"><h3>Hybrid search topology</h3><p>Query → [BM25/keyword] + [dense vector] + [optional graph traversal] → fusion (RRF or cross-encoder reranker) → top-K to the model. A cross-encoder is more accurate but too slow for the whole corpus, so it only reranks the cheap first pass's top candidates.</p></div>
+
+      <h2 class="section">tooling &amp; tech stack</h2>
+      <div class="tool-list">
+        <div class="tool-item"><span class="tool-chip">Pinecone / Weaviate / Qdrant / pgvector</span><p>Vector databases — pgvector when Postgres is already running and fewer moving parts is worth it.</p></div>
+        <div class="tool-item"><span class="tool-chip">Airflow / Dagster / Unstructured.io</span><p>Ingestion orchestration and layout-aware parsing of PDFs, Word docs, HTML.</p></div>
+        <div class="tool-item"><span class="tool-chip">text-embedding-3 / Voyage / BGE / E5</span><p>Managed or self-hosted embedding models.</p></div>
+        <div class="tool-item"><span class="tool-chip">Presidio / OPA</span><p>PII masking at ingestion, and policy-as-code for ABAC rules evaluated at query time.</p></div>
+      </div>
+
+      <h2 class="section">trade-offs &amp; challenges</h2>
+      <div class="warn-card"><h3><span class="mk"></span>Chunking is a tuning knob, not a one-time decision</h3><p>Too-small loses context; too-large dilutes the embedding. Mitigation: run chunk-size sweeps against the eval set, don't guess a number that "seemed reasonable."</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>RBAC-at-retrieval is the #1 RAG security gap</h3><p>Many teams enforce access control only at the app layer, while the vector DB has no ACL awareness — a crafted prompt can surface chunks the user shouldn't see.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>PII leakage through retrieval</h3><p>Masking a customer's name before embedding can make that chunk unfindable later. Mitigation: mask for indexing, but gate the unmasked original behind the same ABAC policy.</p></div>
+
+      <div class="phase-end"><span>Next</span><span class="next">Phase 04 → Agentic Workflows, Memory &amp; Orchestration</span></div>
+    </section>
+
+    <!-- ============ PHASE 4 ============ -->
+    <section class="phase" id="phase-4">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 04 / 07</span></div>
+      <h1 class="title">Agentic Workflows, Memory &amp; Orchestration</h1>
+      <p class="lede">Choosing an agent topology proportional to task complexity — and making tool-calling deterministic and safe.</p>
+
+      <div class="gist">
+        <span class="gist-label">the gist</span>
+        <p class="gist-line">Default to the simplest agent topology that could work. Every agent-to-agent handoff is a place context gets lost, latency accumulates, and cost multiplies.</p>
+        <div class="stat-row">
+          <div class="stat"><b>1 agent</b><span>the default — most production systems should live here</span></div>
+          <div class="stat"><b>N×</b><span>latency and cost multiplier for N agents in a chain</span></div>
+        </div>
+      </div>
+
+      <h2 class="section">phase objectives</h2>
+      <div class="card"><h3>Topology proportional to task complexity</h3><p>"Multi-agent" sounds sophisticated and is tempting, but every hand-off is a place things degrade. Start with the simplest topology; only add agents when the task genuinely decomposes into distinct roles.</p></div>
+      <div class="card"><h3>Deterministic, safe tool-calling</h3><p>The decision to call a tool can be probabilistic, but its execution should be as deterministic and safe as any other backend operation — validated schemas, idempotent side effects.</p></div>
+      <div class="card"><h3>Short-term vs. long-term memory, kept distinct</h3><p>Short-term: coherence within a session. Long-term: preferences and recurring facts across sessions. Conflating them produces a memory system that's neither a good buffer nor a good store.</p></div>
+
+      <figure class="diagram">
+        <div class="fig-head"><span>fig. 4.1</span><span>single-agent loop vs. multi-agent orchestration</span></div>
+        <svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Comparison of a single-agent ReAct loop that reasons, calls a tool, and observes in a cycle, versus a multi-agent pipeline of research, draft, review, and send stages each adding a handoff.">
+          <text x="16" y="24" font-family="IBM Plex Mono" font-size="11" fill="var(--signal)">single-agent — the default</text>
+          <circle cx="90" cy="90" r="46" fill="none" stroke="var(--signal)" stroke-width="1.5"></circle>
+          <text x="90" y="80" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="var(--ink)">reason</text>
+          <text x="90" y="94" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="var(--ink)">→ act</text>
+          <text x="90" y="108" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="var(--ink)">→ observe</text>
+
+          <text x="230" y="24" font-family="IBM Plex Mono" font-size="11" fill="var(--warn)">multi-agent — earn it</text>
+          <g font-family="Space Grotesk" font-size="10.5" fill="var(--ink)">
+            <rect x="230" y="60" width="80" height="34" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect><text x="270" y="81" text-anchor="middle">research</text>
+            <line x1="310" y1="77" x2="336" y2="77" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+            <rect x="340" y="60" width="80" height="34" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect><text x="380" y="81" text-anchor="middle">draft</text>
+            <line x1="420" y1="77" x2="446" y2="77" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+            <rect x="450" y="60" width="80" height="34" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect><text x="490" y="81" text-anchor="middle">review</text>
+            <line x1="530" y1="77" x2="556" y2="77" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+            <rect x="560" y="60" width="80" height="34" rx="2" fill="var(--warn-bg)" stroke="var(--warn)"></rect><text x="600" y="81" text-anchor="middle">send</text>
+          </g>
+          <text x="230" y="120" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">each arrow = a full extra LLM call + a lossy handoff</text>
+        </svg>
+        <figcaption>Escalate to multi-agent only for genuine separation-of-concerns or parallelism — never because it sounds more sophisticated.</figcaption>
+      </figure>
+
+      <h2 class="section">tooling &amp; tech stack</h2>
+      <div class="tool-list">
+        <div class="tool-item"><span class="tool-chip">LangGraph / AutoGen / CrewAI</span><p>Orchestration — state-machine or role-based conversation, or a bare Temporal/Step Functions state machine.</p></div>
+        <div class="tool-item"><span class="tool-chip">Redis / Zep / Mem0</span><p>Short-term session memory vs. dedicated long-term semantic memory stores.</p></div>
+        <div class="tool-item"><span class="tool-chip">Pydantic / Zod</span><p>Schema validation enforcing strict I/O contracts on every tool definition.</p></div>
+      </div>
+
+      <h2 class="section">trade-offs &amp; challenges</h2>
+      <div class="warn-card"><h3><span class="mk"></span>Multi-agent overhead</h3><p>N agents ≈ N× the latency and cost of a single well-designed loop. Default single-agent; escalate only for genuine role separation or parallelism.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>Runaway loops</h3><p>Infinite retries or a planner/critic ping-pong. Mitigation: hard max-iteration count and a token/cost ceiling, with a graceful hand-off to a human.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>Memory pollution</h3><p>Long-term memory accumulates stale, contradictory facts. Mitigation: only persist explicitly confirmed facts, and define a conflict-resolution rule on read.</p></div>
+
+      <div class="throughline">The throughline: default to the simplest topology, and treat every added agent, memory, and tool exposure as something that has to earn its place.</div>
+      <div class="phase-end"><span>Next</span><span class="next">Phase 05 → Guardrails, Security &amp; Evaluation</span></div>
+    </section>
+
+    <!-- ============ PHASE 5 ============ -->
+    <section class="phase" id="phase-5">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 05 / 07</span></div>
+      <h1 class="title">Guardrails, Security &amp; Evaluation</h1>
+      <p class="lede">Making the system safe to expose to real users, and measurable enough to improve with confidence — in CI/CD, not ad hoc.</p>
+
+      <div class="gist">
+        <span class="gist-label">the gist</span>
+        <p class="gist-line">The model's context window is a new attack surface — it can be persuaded by anything in it, including a retrieved document it never should have trusted as an instruction.</p>
+        <div class="stat-row">
+          <div class="stat"><b>3 metrics</b><span>the RAG triad — faithfulness, answer relevance, context precision/recall</span></div>
+          <div class="stat"><b>0</b><span>the number of exceptions thrown by a silently misclassifying router</span></div>
+        </div>
+      </div>
+
+      <h2 class="section">phase objectives</h2>
+      <div class="card"><h3>Defend against the OWASP Top 10 for LLMs</h3><p>In a traditional web app the backend logic is trusted; in an LLM system the model itself is a decision-maker persuadable by anything in its context — including a retrieved document or a tool's output.</p></div>
+      <div class="card"><h3>Real-time input/output guardrails</h3><p>A layer inspecting both what goes in and what comes out, in real time, in the request path — fast enough not to blow the Phase 1 latency budget.</p></div>
+      <div class="card"><h3>A repeatable evaluation harness in CI/CD</h3><p>Turning "does this feel better?" into a number that runs automatically on every change — without it, every prompt tweak is a gamble evaluated by vibes.</p></div>
+
+      <figure class="diagram">
+        <div class="fig-head"><span>fig. 5.1</span><span>the guardrail pipeline</span></div>
+        <svg viewBox="0 0 680 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of a request passing through an input guardrail for jailbreak, PII and toxicity, then the LLM, then an output guardrail for hallucination, toxicity, format and PII leaks, before reaching the response.">
+          <g font-family="Space Grotesk" font-size="11" fill="var(--ink)">
+            <rect x="12" y="46" width="80" height="40" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect><text x="52" y="70" text-anchor="middle">Input</text>
+            <line x1="92" y1="66" x2="120" y2="66" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+            <rect x="124" y="40" width="150" height="52" rx="2" fill="var(--warn-bg)" stroke="var(--warn)" stroke-width="1.5"></rect>
+            <text x="199" y="60" text-anchor="middle" font-size="10.5">input guardrail</text><text x="199" y="76" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="var(--muted)">jailbreak / PII / toxicity</text>
+            <line x1="274" y1="66" x2="302" y2="66" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+            <rect x="306" y="46" width="70" height="40" rx="2" fill="var(--signal-bg)" stroke="var(--signal)" stroke-width="1.5"></rect><text x="341" y="70" text-anchor="middle">LLM</text>
+            <line x1="376" y1="66" x2="404" y2="66" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+            <rect x="408" y="40" width="160" height="52" rx="2" fill="var(--warn-bg)" stroke="var(--warn)" stroke-width="1.5"></rect>
+            <text x="488" y="60" text-anchor="middle" font-size="10.5">output guardrail</text><text x="488" y="76" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="var(--muted)">hallucination / format / PII</text>
+            <line x1="568" y1="66" x2="596" y2="66" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+            <rect x="600" y="46" width="70" height="40" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect><text x="635" y="70" text-anchor="middle">Response</text>
+          </g>
+        </svg>
+        <figcaption>Guardrails run as fast, cheap classifiers — never another full LLM call stacked in series.</figcaption>
+      </figure>
+
+      <h2 class="section">tooling &amp; tech stack</h2>
+      <div class="tool-list">
+        <div class="tool-item"><span class="tool-chip">NeMo Guardrails / Llama Guard</span><p>Programmable rails and purpose-built safety classifiers.</p></div>
+        <div class="tool-item"><span class="tool-chip">Ragas / TruLens / DeepEval / promptfoo</span><p>RAG-triad eval metrics and CI-friendly prompt regression testing.</p></div>
+        <div class="tool-item"><span class="tool-chip">garak</span><p>An LLM vulnerability scanner, analogous to a security scanner for a web app.</p></div>
+      </div>
+
+      <h2 class="section">trade-offs &amp; challenges</h2>
+      <div class="warn-card"><h3><span class="mk"></span>Guardrail latency tax</h3><p>Stacking classifier calls adds to TTFT. Mitigation: cheap deterministic checks inline, heavier LLM-based guardrails only for cases the cheap pass flags as ambiguous.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>LLM-as-Judge is not ground truth</h3><p>A judge model favors longer, more confident-sounding answers regardless of correctness. Mitigation: periodically calibrate judge scores against human-labeled sets.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>Eval sets go stale</h3><p>A launch-time golden set stops representing real traffic as the corpus and users shift. Mitigation: mine production logs for hard cases and fold them in on a cadence.</p></div>
+
+      <div class="phase-end"><span>Next</span><span class="next">Phase 06 → LLMOps, Infrastructure &amp; Resilience</span></div>
+    </section>
+
+    <!-- ============ PHASE 6 ============ -->
+    <section class="phase" id="phase-6">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 06 / 07</span></div>
+      <h1 class="title">LLMOps, Infrastructure &amp; Resilience</h1>
+      <p class="lede">Operationalizing for production-scale reliability and cost control — treating prompts, models, and indexes as first-class deployable artifacts.</p>
+
+      <div class="gist">
+        <span class="gist-label">the gist</span>
+        <p class="gist-line">This is the phase that separates a working prototype from something that stays up at 3am when a provider has an incident.</p>
+        <div class="stat-row">
+          <div class="stat"><b>1 gateway</b><span>single point of control for every model call</span></div>
+          <div class="stat"><b>2 caches</b><span>exact-match prompt caching vs. cross-user semantic caching</span></div>
+        </div>
+      </div>
+
+      <h2 class="section">phase objectives</h2>
+      <div class="card"><h3>A model gateway</h3><p>Abstracts providers, handles failover, enforces rate limits. Without it, provider-specific logic gets scattered across the codebase, and switching providers means touching every call site.</p></div>
+      <div class="card"><h3>Caching layers</h3><p>Prompt caching reuses an exact repeated prefix — cheap, precise. Semantic caching reuses an answer to a similar-but-not-identical question — more powerful, riskier.</p></div>
+      <div class="card"><h3>CI/CD for prompts, models &amp; indexes</h3><p>A prompt change is a deployment, with the same rigor as a code deployment — versioned, tested against regressions, rollback-capable.</p></div>
+
+      <figure class="diagram">
+        <div class="fig-head"><span>fig. 6.1</span><span>model gateway — five jobs</span></div>
+        <svg viewBox="0 0 680 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of the model gateway sitting between the application and model providers, responsible for provider routing, load balancing, automatic failover, request queueing, and centralized cost attribution.">
+          <rect x="270" y="16" width="140" height="40" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect>
+          <text x="340" y="40" text-anchor="middle" font-family="Space Grotesk" font-size="12" fill="var(--ink)">application</text>
+          <line x1="340" y1="56" x2="340" y2="80" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></line>
+          <rect x="220" y="84" width="240" height="46" rx="2" fill="var(--signal-bg)" stroke="var(--signal)" stroke-width="1.5"></rect>
+          <text x="340" y="112" text-anchor="middle" font-family="Space Grotesk" font-size="12.5" font-weight="600" fill="var(--signal-ink)">model gateway</text>
+          <g font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">
+            <text x="60" y="170">routing</text><text x="180" y="170">load-balance</text><text x="330" y="170">failover</text><text x="450" y="170">queueing</text><text x="580" y="170">cost attribution</text>
+          </g>
+          <line x1="260" y1="130" x2="90" y2="158" stroke="var(--muted)" stroke-width="1" marker-end="url(#a1)"></line>
+          <line x1="300" y1="130" x2="210" y2="158" stroke="var(--muted)" stroke-width="1" marker-end="url(#a1)"></line>
+          <line x1="340" y1="130" x2="350" y2="158" stroke="var(--muted)" stroke-width="1" marker-end="url(#a1)"></line>
+          <line x1="380" y1="130" x2="470" y2="158" stroke="var(--muted)" stroke-width="1" marker-end="url(#a1)"></line>
+          <line x1="420" y1="130" x2="600" y2="158" stroke="var(--muted)" stroke-width="1" marker-end="url(#a1)"></line>
+        </svg>
+        <figcaption>A single ingress point — the same pattern as an API gateway in microservices, behind model providers instead.</figcaption>
+      </figure>
+
+      <h2 class="section">tooling &amp; tech stack</h2>
+      <div class="tool-list">
+        <div class="tool-item"><span class="tool-chip">LiteLLM Proxy / Kong / Portkey</span><p>Gateway products, or AWS Bedrock's built-in cross-region failover for an AWS-native stack.</p></div>
+        <div class="tool-item"><span class="tool-chip">Redis + GPTCache</span><p>Exact and semantic caching, alongside native provider prompt-caching APIs.</p></div>
+        <div class="tool-item"><span class="tool-chip">GitHub Actions + promptfoo/Ragas</span><p>Eval suites as a merge gate turning Phase 5's harness into an enforced deployment gate.</p></div>
+        <div class="tool-item"><span class="tool-chip">vLLM/TGI on KServe / Ray Serve</span><p>Self-hosted serving with GPU autoscaling — or managed endpoints trading control for less ops burden.</p></div>
+      </div>
+
+      <h2 class="section">trade-offs &amp; challenges</h2>
+      <div class="warn-card"><h3><span class="mk"></span>Failover correctness</h3><p>Failing over mid-conversation can silently change tone or safety posture. Mitigation: only failover between models validated as equivalent-tier, and log every event.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>Cache staleness vs. hit rate</h3><p>Semantic caching can serve an outdated answer. Mitigation: bind TTL to the data-freshness SLA, and wire invalidation to source-update events.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>Rate-limit retry storms</h3><p>Uniform retry-with-backoff can synchronize a burst right as a provider recovers. Mitigation: circuit breakers, jittered backoff, load-shedding.</p></div>
+
+      <div class="phase-end"><span>Next</span><span class="next">Phase 07 → Monitoring, Observability &amp; Feedback Loops</span></div>
+    </section>
+
+    <!-- ============ PHASE 7 ============ -->
+    <section class="phase" id="phase-7">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 07 / 07</span></div>
+      <h1 class="title">Monitoring, Observability &amp; Feedback Loops</h1>
+      <p class="lede">Closing the loop — knowing what the system is doing in production, catching degradation before users complain, feeding real signal back into evaluation.</p>
+
+      <div class="gist">
+        <span class="gist-label">the gist</span>
+        <p class="gist-line">User complaints are a lagging indicator. By the time enough people notice, a meaningful volume of degraded responses has already shipped.</p>
+        <div class="stat-row">
+          <div class="stat"><b>3 kinds</b><span>of drift — data, embedding, and output/semantic</span></div>
+          <div class="stat"><b>2 signals</b><span>explicit feedback (low volume, clear) vs. implicit (high volume, noisy)</span></div>
+        </div>
+      </div>
+
+      <h2 class="section">phase objectives</h2>
+      <div class="card"><h3>Full traceability, request by request</h3><p>Not "is it up" — but "is this individual request behaving correctly, and can I reconstruct exactly what happened when something goes wrong?"</p></div>
+      <div class="card"><h3>Detect degradation before users complain</h3><p>This is what separates reactive operations from proactive ones — catching the signal earlier than a support ticket.</p></div>
+      <div class="card"><h3>Feed real signal back into evaluation</h3><p>Without a return path, observability is just a read-only window; with it, the system actually improves over time from real usage.</p></div>
+
+      <figure class="diagram">
+        <div class="fig-head"><span>fig. 7.1</span><span>the continuous improvement flywheel</span></div>
+        <svg viewBox="0 0 680 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Circular flywheel diagram: production traffic generates traces and feedback, which are labeled and folded into the golden eval set, which gates CI/CD deployment, which returns to production.">
+          <circle cx="340" cy="95" r="72" fill="none" stroke="var(--rule)" stroke-width="1" stroke-dasharray="3 4"></circle>
+          <g font-family="Space Grotesk" font-size="11.5" fill="var(--ink)">
+            <rect x="290" y="10" width="100" height="34" rx="2" fill="var(--signal-bg)" stroke="var(--signal)"></rect><text x="340" y="32" text-anchor="middle">Production</text>
+            <rect x="440" y="78" width="110" height="34" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect><text x="495" y="100" text-anchor="middle">Trace + feedback</text>
+            <rect x="290" y="146" width="100" height="34" rx="2" fill="var(--paper-raised)" stroke="var(--rule)"></rect><text x="340" y="168" text-anchor="middle">Golden eval set</text>
+            <rect x="130" y="78" width="110" height="34" rx="2" fill="var(--warn-bg)" stroke="var(--warn)"></rect><text x="185" y="100" text-anchor="middle">CI/CD gate</text>
+          </g>
+          <path d="M 390,25 A 72,72 0 0,1 470,90" fill="none" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></path>
+          <path d="M 495,112 A 72,72 0 0,1 388,164" fill="none" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></path>
+          <path d="M 292,163 A 72,72 0 0,1 190,112" fill="none" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></path>
+          <path d="M 187,78 A 72,72 0 0,1 292,26" fill="none" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a1)"></path>
+        </svg>
+        <figcaption>Without the return path this is a dashboard. With it, the system gets better from real usage.</figcaption>
+      </figure>
+
+      <h2 class="section">tooling &amp; tech stack</h2>
+      <div class="tool-list">
+        <div class="tool-item"><span class="tool-chip">LangSmith / Phoenix / Langfuse</span><p>Trace/span-level observability purpose-built for LLM call chains.</p></div>
+        <div class="tool-item"><span class="tool-chip">OpenTelemetry (GenAI conventions)</span><p>Vendor-neutral instrumentation — no lock-in to one platform's SDK.</p></div>
+        <div class="tool-item"><span class="tool-chip">Arize / WhyLabs / PSI</span><p>Embedding and data drift monitoring.</p></div>
+        <div class="tool-item"><span class="tool-chip">Segment/Amplitude + Label Studio</span><p>Feedback pipelines joined to trace IDs, feeding a human-labeling queue.</p></div>
+      </div>
+
+      <h2 class="section">trade-offs &amp; challenges</h2>
+      <div class="warn-card"><h3><span class="mk"></span>Drift alerts without action paths</h3><p>An alert with no owner and no response trains people to ignore alerts. Mitigation: every drift type maps to a documented runbook with a named owner.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>Feedback loop bias</h3><p>Explicit feedback overrepresents power users and the highly frustrated. Mitigation: weight implicit signals more, and run periodic blind quality sampling.</p></div>
+      <div class="warn-card"><h3><span class="mk"></span>Attribution in multi-agent systems</h3><p>Pinpointing which component caused a regression needs span-level granularity — flat request logging doesn't have the resolution.</p></div>
+
+      <div class="throughline">This phase closes the loop: drift signals and feedback feed back into Phase 5's eval set, which gates Phase 6's CI/CD deployments, which are observed again here.</div>
+      <div class="phase-end"><span>Next</span><span class="next">Capstone → Enterprise Knowledge &amp; Action Assistant</span></div>
+    </section>
+
+    <!-- ============ CAPSTONE ============ -->
+    <section class="phase" id="capstone">
+      <div class="eyebrow-row"><span class="phase-ghost cs">Capstone</span></div>
+      <h1 class="title">Enterprise Knowledge &amp; Action Assistant</h1>
+      <p class="lede">Where everything from Phases 1–7 gets applied to one concrete system, so the decisions can be seen interlocking rather than existing as seven separate frameworks.</p>
+
+      <div class="gist">
+        <span class="gist-label">the scenario</span>
+        <p class="gist-line">One assistant, three execution paths: RBAC-scoped document Q&amp;A (RAG), live data lookups via SQL tool-calling, and real workflow triggers — forcing every phase's decisions to interact with each other.</p>
+      </div>
+
+      <h2 class="section">applying the seven phases</h2>
+      <div class="cs-map">
+        <div class="p">01</div><div class="d"><strong>Classification &amp; NFRs.</strong> Document Q&amp;A is genuinely probabilistic; "what's my PTO balance" is a deterministic lookup wearing conversational clothing. Three execution paths, not one pipeline — RAG tolerates TTFT &lt; 800ms, SQL lookups need p95 &lt; 2s.</div>
+        <div class="p">02</div><div class="d"><strong>Routing &amp; tiering.</strong> A router classifies intent into knowledge_query / data_query / action_trigger. RAG gets a mid-tier model; SQL/action get a fast, cheap model built for structure; cross-domain questions escalate to the largest model.</div>
+        <div class="p">03</div><div class="d"><strong>Retrieval &amp; governance.</strong> Documents are ACL-tagged per source system. Pre-filter RBAC means a Sales employee can't surface HR salary data — those chunks are never candidates in the first place.</div>
+        <div class="p">04</div><div class="d"><strong>Orchestration.</strong> A LangGraph orchestrator with three nodes maps to the three intents. SQL runs under a read-only role; workflow writes are idempotent and pause for human confirmation before executing.</div>
+        <div class="p">05</div><div class="d"><strong>Guardrails.</strong> SQL calls pass through an allow-list guardrail against the known schema. RAG answers run a faithfulness check before returning. Workflow triggers get logged as high-risk spans regardless of guardrail pass/fail.</div>
+        <div class="p">06</div><div class="d"><strong>Infrastructure.</strong> The gateway sits in front of the router with equivalence-validated failover. Semantic caching applies only to the knowledge path — SQL/action answers are user-specific and never cached across users.</div>
+        <div class="p">07</div><div class="d"><strong>Observability.</strong> Full OTel tracing per step. Faithfulness scoring runs on 100% of RAG responses at this volume — not sampled. Thumbs-down feedback routes to human review and folds into the golden eval set weekly.</div>
+      </div>
+
+      <div class="schematic">
+        <div class="fig-head"><span>fig. cs.1</span><span>end-to-end pipeline topology</span></div>
+        <pre>Employee (UI) ── HTTPS ──▶ API Gateway (AuthN/AuthZ) ──▶ Intent Router
+                                                              │
+                              ┌───────────────────────────────┼───────────────────────────────┐
+                              ▼                               ▼                               ▼
+                     RAG Retriever Node              SQL Tool-Calling Node           Workflow Trigger Node
+                     hybrid search + RBAC filter      read-only role + schema         idempotent + confirmation
+                              │                               │                               │
+                              ▼                               ▼                               ▼
+                     Vector DB (ACL-tagged)          Live DB (read replica)          Workflow Engine (Temporal)
+                              └───────────────────────────────┴───────────────────────────────┘
+                                                              ▼
+                                                       Model Gateway
+                                             failover · prompt + semantic cache
+                                                              ▼
+                                              LLM (routed by complexity tier)
+                                                              ▼
+                                                     Output Guardrails
+                                            faithfulness · PII/toxicity · format
+                                                              ▼
+                                                    Response → Employee
+                                                              ▼
+                                            Observability &amp; Feedback Loop ──▶ back into Phase 5 eval set</pre>
+        <div class="cap">Three execution paths converge on shared gateway, guardrail, and observability infrastructure — built once, reused by every path.</div>
+      </div>
+
+      <h2 class="section">why this holds up under interview scrutiny</h2>
+      <p>A staff-level interviewer isn't scoring whether a vector DB box and an LLM box got drawn. They're checking whether every arrow can be explained — why the SQL path hits a replica, why RBAC filtering happens inside the vector DB query, why workflow triggers pause for confirmation while RAG answers don't. Each is a specific failure mode from one of the seven phases; the diagram is a compressed record of seven phases' worth of "here's what goes wrong, and here's the decision that prevents it."</p>
+
+      <div class="phase-end"><span>End</span><span class="next">devwithabhinav.in · AI System Design &amp; SDLC</span></div>
+
+      <div class="cta-block">
+        <div class="cta-eyebrow">get in touch</div>
+        <h3>Open to senior/lead remote roles</h3>
+        <p>Especially where enterprise .NET meets AI agent engineering — reach out, or see the Microsoft Agent Framework build this playbook draws on.</p>
+        <div class="cta-row">
+          <a class="primary" href="mailto:devwithabhinav@gmail.com">Email me</a>
+          <a class="secondary" href="https://github.com/devwithabhinav/AIEngineeringWithDotNet">View the MAF repo ↗</a>
+          <a class="secondary" href="https://devwithabhinav.in/profile/index.html">Back to full profile ↗</a>
+        </div>
+      </div>
+    </section>
+
+    </div>
+  </main>
+</div>
+
+<footer class="pagefoot">mockup — design system applied across all 7 phases + capstone</footer>
+
+<script>
+(function(){
+  try {
+    var links = Array.prototype.slice.call(document.querySelectorAll('.phase-link'));
+    var sections = links.map(function(l){ return document.getElementById(l.dataset.target); });
+    function setActive(id){
+      links.forEach(function(l){ l.classList.toggle('active', l.dataset.target === id); });
+    }
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if (entry.isIntersecting) setActive(entry.target.id);
+        });
+      }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+      sections.forEach(function(s){ if (s) io.observe(s); });
+    }
+    setActive('phase-1');
+  } catch (e) { /* no-op: nav highlight is a progressive enhancement */ }
+})();
+</script>
 
 </body>
 </html>
