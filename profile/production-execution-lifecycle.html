@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Complete Production Execution Lifecycle — devwithabhinav</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --paper: #F3F4F0; --paper-raised: #FFFFFE; --grid-line: #DEDDD2; --rule: #C9C7BA;
+    --ink: #1A2333; --body: #333B4A; --muted: #6B7280;
+    --signal: #0E6E77; --signal-ink: #0A5259; --warn: #A34A08;
+    --warn-bg: #FBF0E4; --signal-bg: #E7F1F0; --chip-bg: #ECEAE0;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --paper: #12161D; --paper-raised: #171C24; --grid-line: #232A35; --rule: #2B323F;
+      --ink: #EDEFF3; --body: #C6CCD6; --muted: #8892A0; --signal: #35B7B0; --signal-ink: #6ED4CD;
+      --warn: #E08A3F; --warn-bg: #241C13; --signal-bg: #12262A; --chip-bg: #1D222B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #12161D; --paper-raised: #171C24; --grid-line: #232A35; --rule: #2B323F;
+    --ink: #EDEFF3; --body: #C6CCD6; --muted: #8892A0; --signal: #35B7B0; --signal-ink: #6ED4CD;
+    --warn: #E08A3F; --warn-bg: #241C13; --signal-bg: #12262A; --chip-bg: #1D222B;
+  }
+  html { scroll-padding-top: 70px; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: linear-gradient(var(--paper), var(--paper)),
+      repeating-linear-gradient(0deg, var(--grid-line) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(90deg, var(--grid-line) 0 1px, transparent 1px 40px);
+    background-color: var(--paper);
+    color: var(--body); font-family: var(--font-body); font-size: 17px; line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--signal-ink); }
+
+  .topbar { position: sticky; top: 0; top: env(safe-area-inset-top, 0px); z-index: 30;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px 24px; padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .brand { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--ink);
+    display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .brand .mark { width: 18px; height: 18px; border: 1.5px solid var(--ink); display: grid; place-items: center; font-size: 10px; font-family: var(--font-mono); flex-shrink: 0; }
+  .mockup-tag { font-family: var(--font-mono); font-size: 11px; color: var(--signal-ink); border: 1px solid var(--signal); padding: 3px 8px; border-radius: 3px; white-space: nowrap; }
+
+  .author-strip { max-width: 1120px; margin: 0 auto; padding: 18px 32px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .author-strip .avatar { width: 40px; height: 40px; border: 1.5px solid var(--ink); border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--ink); flex-shrink: 0; background: var(--paper-raised); }
+  .author-strip .who { display: flex; flex-direction: column; gap: 1px; margin-right: auto; }
+  .author-strip .who .name { font-family: var(--font-display); font-weight: 600; font-size: 14.5px; color: var(--ink); }
+  .author-strip .who .role { font-family: var(--font-body); font-style: italic; font-size: 13.5px; color: var(--muted); }
+  .author-strip .links { display: flex; gap: 8px; flex-wrap: wrap; }
+  .author-strip .links a { font-family: var(--font-mono); font-size: 11.5px; color: var(--signal-ink); background: var(--chip-bg); padding: 4px 10px; border-radius: 3px; text-decoration: none; white-space: nowrap; }
+  .author-strip .links a:hover { background: var(--signal-bg); }
+  @media (max-width: 720px) { .author-strip { padding: 14px 16px; } .author-strip .who .role { display: none; } }
+
+  .shell { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 76px minmax(0,1fr); }
+  .rail { padding: 48px 0 40px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    border-right: 1px solid var(--rule); position: sticky; top: 64px; align-self: start;
+    max-height: calc(100vh - 64px); overflow-y: auto; }
+  .rail a { text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 0; }
+  .rail .lbl { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+  .rail a.active .lbl { color: var(--signal-ink); font-weight: 500; }
+  .rail .dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--rule); background: transparent; }
+  .rail a.active .dot { background: var(--signal); border-color: var(--signal); width: 10px; height: 10px; }
+  .rail .track { width: 1px; flex: none; height: 14px; background: var(--rule); }
+
+  main { padding: 0 32px 40px; min-width: 0; }
+  .col { max-width: 700px; margin: 0 auto; }
+
+  section.phase { padding-top: 64px; scroll-margin-top: 64px; }
+  section.phase:first-of-type { padding-top: 48px; }
+
+  .eyebrow-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+  .phase-ghost { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--signal); }
+  h1.title { font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 3.6vw, 38px); line-height: 1.14; color: var(--ink); margin: 0 0 16px; max-width: 18ch; letter-spacing: -0.01em; }
+  .lede { font-size: 18.5px; line-height: 1.6; color: var(--body); margin: 0 0 26px; max-width: 62ch; }
+
+  .gist { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: flex-start; padding: 18px 20px; background: var(--signal-bg); border: 1px solid color-mix(in srgb, var(--signal) 35%, var(--rule)); border-radius: 2px; margin-bottom: 38px; }
+  .gist-label { font-family: var(--font-mono); font-size: 11px; color: var(--signal-ink); flex-basis: 100%; margin-bottom: 2px; }
+  .gist-line { font-family: var(--font-body); font-style: italic; font-size: 16px; color: var(--ink); flex: 1 1 260px; margin: 0; }
+  .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip-row .rchip { font-family: var(--font-mono); font-size: 11.5px; color: var(--signal-ink); background: var(--paper-raised); border: 1px solid color-mix(in srgb, var(--signal) 40%, var(--rule)); padding: 4px 10px; border-radius: 3px; }
+
+  h2.section { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.02em; color: var(--muted); display: flex; align-items: center; gap: 12px; margin: 48px 0 18px; }
+  h2.section::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+
+  p { margin: 0 0 16px; max-width: 66ch; }
+  strong { color: var(--ink); font-weight: 600; }
+
+  .card { border-left: 3px solid var(--signal); padding: 2px 0 2px 20px; margin: 0 0 22px; }
+  .card h3 { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--ink); margin: 0 0 6px; }
+  .card p { margin-bottom: 0; font-size: 15.5px; }
+
+  .layer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 6px 0 30px; }
+  .layer-card { border: 1px solid var(--rule); background: var(--paper-raised); padding: 18px 20px; border-radius: 2px; }
+  .layer-card.gen { border-left: 3px solid var(--muted); }
+  .layer-card.agentic { border-left: 3px solid var(--signal); }
+  .layer-card .lt { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); margin-bottom: 6px; }
+  .layer-card h3 { font-family: var(--font-display); font-size: 16px; margin: 0 0 8px; color: var(--ink); }
+  .layer-card p { font-size: 14.5px; margin: 0; }
+  @media (max-width: 640px) { .layer-grid { grid-template-columns: 1fr; } }
+
+  .step { margin: 44px 0 0; }
+  .step:first-of-type { margin-top: 8px; }
+  .step-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+  .step-num { font-family: var(--font-mono); font-size: 11.5px; color: var(--warn); border: 1px solid var(--warn); padding: 2px 8px; border-radius: 3px; flex-shrink: 0; white-space: nowrap; }
+  .step-title { font-family: var(--font-display); font-weight: 600; font-size: 19px; color: var(--ink); margin: 0; }
+  .step-intro { font-size: 15.5px; margin: 8px 0 20px; max-width: 64ch; color: var(--body); }
+
+  .cat-label { font-family: var(--font-mono); font-size: 11px; color: var(--signal-ink); margin: 20px 0 10px; letter-spacing: 0.02em; }
+
+  .tool-list { display: flex; flex-direction: column; gap: 11px; margin-bottom: 8px; }
+  .tool-item { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+  .tool-chip { font-family: var(--font-mono); font-size: 12px; color: var(--signal-ink); background: var(--chip-bg); padding: 3px 9px; border-radius: 3px; white-space: nowrap; flex-shrink: 0; }
+  .tool-item p { margin: 0; font-size: 14.5px; }
+
+  .phase-end { margin-top: 44px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .phase-end .next { font-family: var(--font-mono); font-size: 12.5px; }
+
+  .cta-block { max-width: 700px; margin: 48px auto 0; padding: 32px 28px; border: 1px solid var(--rule); background: var(--paper-raised); border-radius: 2px; position: relative; }
+  .cta-block::before { content: ""; position: absolute; top: -1px; left: 24px; width: 34px; height: 3px; background: var(--signal); }
+  .cta-block .cta-eyebrow { font-family: var(--font-mono); font-size: 11px; color: var(--signal-ink); margin-bottom: 10px; }
+  .cta-block h3 { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--ink); margin: 0 0 10px; }
+  .cta-block p { font-size: 15.5px; margin-bottom: 20px; max-width: 56ch; }
+  .cta-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .cta-row a.primary { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--paper); background: var(--signal); padding: 10px 18px; border-radius: 3px; text-decoration: none; }
+  .cta-row a.secondary { font-family: var(--font-mono); font-size: 12.5px; color: var(--signal-ink); background: var(--chip-bg); padding: 9px 14px; border-radius: 3px; text-decoration: none; }
+
+  footer.pagefoot { max-width: 700px; margin: 60px auto 0; padding: 24px 0 60px; border-top: 1px solid var(--rule); font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); text-align: center; }
+
+  @media (max-width: 720px) {
+    .shell { grid-template-columns: 34px minmax(0,1fr); }
+    .rail { padding: 30px 0 30px; gap: 8px; }
+    .rail .lbl { display: none; }
+    main { padding: 0 16px 40px; }
+    h1.title { max-width: none; }
+  }
+  :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="mark">a</span> devwithabhinav · Production Execution Lifecycle</div>
+  <div class="mockup-tag">reference architecture</div>
+</header>
+
+<div class="author-strip">
+  <div class="avatar">AS</div>
+  <div class="who">
+    <span class="name">Abhinav Srivastava</span>
+    <span class="role">Lead Engineer · 12+ yrs enterprise .NET &amp; AWS · building AI agents with Microsoft Agent Framework</span>
+  </div>
+  <div class="links">
+    <a href="https://devwithabhinav.in/profile/index.html">full profile ↗</a>
+    <a href="mailto:devwithabhinav@gmail.com">email</a>
+    <a href="https://www.linkedin.com/in/abhinav-srivastava-27aaa072/">linkedin</a>
+    <a href="https://github.com/devwithabhinav">github</a>
+  </div>
+</div>
+
+<div class="shell">
+  <nav class="rail" aria-label="Phase navigation" id="rail">
+    <a href="#phase-1" class="phase-link" data-target="phase-1"><span class="dot"></span><span class="lbl">01</span></a>
+    <span class="track"></span>
+    <a href="#phase-2" class="phase-link" data-target="phase-2"><span class="dot"></span><span class="lbl">02</span></a>
+    <span class="track"></span>
+    <a href="#phase-3" class="phase-link" data-target="phase-3"><span class="dot"></span><span class="lbl">03</span></a>
+    <span class="track"></span>
+    <a href="#phase-4" class="phase-link" data-target="phase-4"><span class="dot"></span><span class="lbl">04</span></a>
+    <span class="track"></span>
+    <a href="#phase-5" class="phase-link" data-target="phase-5"><span class="dot"></span><span class="lbl">05</span></a>
+    <span class="track"></span>
+    <a href="#phase-6" class="phase-link" data-target="phase-6"><span class="dot"></span><span class="lbl">06</span></a>
+    <span class="track"></span>
+    <a href="#phase-7" class="phase-link" data-target="phase-7"><span class="dot"></span><span class="lbl">07</span></a>
+  </nav>
+
+  <main>
+    <div class="col">
+
+    <!-- ============ INTRO: GenAI vs Agentic AI ============ -->
+    <section class="phase" id="phase-1" style="padding-top:48px;">
+      <div class="eyebrow-row"><span class="phase-ghost">Architecture note</span></div>
+      <h1 class="title">The Complete Production Execution Lifecycle</h1>
+      <p class="lede">A hybrid stack: an <strong>Agentic AI execution lifecycle</strong> built on top of a <strong>Generative AI infrastructure</strong> — 7 phases, 13 steps, and the specific tool for each one, from offline ingestion through post-execution observability.</p>
+
+      <div class="gist">
+        <span class="gist-label">why this is current</span>
+        <p class="gist-line">Three signals confirm this is the standard enterprise architecture right now, not a dated pattern.</p>
+        <div class="chip-row">
+          <span class="rchip">MCP &amp; A2A — standardized tool + agent-to-agent protocols</span>
+          <span class="rchip">State-machine orchestration — graph loops, not linear chains</span>
+          <span class="rchip">GraphRAG — entity graphs over naive fixed-chunking</span>
+        </div>
+      </div>
+
+      <h2 class="section">two layers, one stack</h2>
+      <div class="layer-grid">
+        <div class="layer-card gen">
+          <div class="lt">the muscle / perception layer</div>
+          <h3>Generative AI</h3>
+          <p>Linear, reactive input-to-output — a prompt goes in, the model produces text, code, or embeddings. Shows up in Phases 2, 3, and 6 below.</p>
+        </div>
+        <div class="layer-card agentic">
+          <div class="lt">the brain / decision engine</div>
+          <h3>Agentic AI</h3>
+          <p>An autonomous, cyclic loop — goal → plan → tool call → observe → reflect → execute. Manages orchestration and multi-step state. Shows up in Phases 4, 6, and 7 below.</p>
+        </div>
+      </div>
+
+      <div class="phase-end"><span>Next</span><span class="next">Phase 01 → Offline Ingestion &amp; Data Preparation</span></div>
+    </section>
+
+    <!-- ============ PHASE 1 ============ -->
+    <section class="phase" id="phase-1b">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 01 / 07 · offline</span></div>
+      <h1 class="title">Offline Ingestion &amp; Data Preparation</h1>
+      <p class="lede">Triggered asynchronously, before any user prompt ever hits the application.</p>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 1</span><h3 class="step-title">Raw Data Ingestion &amp; Extraction</h3></div>
+        <p class="step-intro">Raw enterprise files — PDFs, spreadsheets, slide decks, database dumps — are cleaned, extracted, and normalized into machine-readable text.</p>
+
+        <div class="cat-label">extraction &amp; parsing tools</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Unstructured.io</span><p>Ingests messy formats (PDF, HTML, DOCX, images) into clean structured JSON. One API to normalize many heterogeneous file types before chunking.</p></div>
+          <div class="tool-item"><span class="tool-chip">LlamaParse</span><p>Specialized in dense, table-heavy PDFs — financial reports, technical manuals — where naive extraction breaks table structure.</p></div>
+          <div class="tool-item"><span class="tool-chip">Apache Tika</span><p>Mature Java-based extractor supporting 1000+ formats. Free, self-hosted, battle-tested for legacy/obscure file types.</p></div>
+          <div class="tool-item"><span class="tool-chip">Marker</span><p>Deep-learning PDF-to-Markdown conversion, including scanned documents, preserving headers and tables without heavy OCR post-processing.</p></div>
+        </div>
+
+        <div class="cat-label">data pipeline frameworks</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Airflow / Prefect / Dagster</span><p>DAG-based schedulers for recurring ingestion — retries, dependencies, and monitoring across many data sources.</p></div>
+          <div class="tool-item"><span class="tool-chip">dbt</span><p>SQL-first transformation for structured/tabular data that needs cleaning and modeling before embedding.</p></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 2</span><h3 class="step-title">Chunking &amp; Structuring</h3></div>
+        <p class="step-intro">Extracted documents are split into chunks optimized for retrieval, preserving semantic meaning without cutting off context.</p>
+
+        <div class="cat-label">strategies &amp; techniques</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Semantic Chunking</span><p>Splits where embedding similarity between sentences drops. For legal/medical documents where mid-idea cuts hurt accuracy.</p></div>
+          <div class="tool-item"><span class="tool-chip">Recursive Character Splitting</span><p>Tries a hierarchy of separators until chunks fit a target size — the fast, simple default for general-purpose text.</p></div>
+          <div class="tool-item"><span class="tool-chip">Parent-Child Mapping</span><p>Retrieves small precise child chunks for accuracy, returns the larger parent chunk for full context.</p></div>
+          <div class="tool-item"><span class="tool-chip">Sliding Window Chunking</span><p>Overlapping chunks (e.g. 20%) so ideas spanning a boundary aren't lost when important info straddles the edge.</p></div>
+        </div>
+      </div>
+
+      <div class="phase-end"><span>Next</span><span class="next">Phase 02 → Offline Vector Indexing &amp; Memory Setup</span></div>
+    </section>
+
+    <!-- ============ PHASE 2 ============ -->
+    <section class="phase" id="phase-2">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 02 / 07 · offline</span></div>
+      <h1 class="title">Offline Vector Indexing &amp; Memory Setup</h1>
+      <p class="lede">Organizes data into searchable repositories so the AI can retrieve relevant context later.</p>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 3</span><h3 class="step-title">Vector Embeddings &amp; Hybrid Indexing</h3></div>
+        <p class="step-intro">Text chunks are converted into dense vector representations and loaded into vector search engines alongside hybrid keyword indices.</p>
+
+        <div class="cat-label">vector embedding models</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">OpenAI Embeddings</span><p>text-embedding-3 family — reliable managed API, no hosting infra, don't need full on-prem data.</p></div>
+          <div class="tool-item"><span class="tool-chip">Voyage AI</span><p>Domain-tuned models (code, finance, legal) that often outperform generic embeddings when accuracy in a niche matters most.</p></div>
+          <div class="tool-item"><span class="tool-chip">Jina AI</span><p>Open-weight, long-context, multilingual — downloadable for self-hosting.</p></div>
+          <div class="tool-item"><span class="tool-chip">BGE (BAAI)</span><p>Widely used, free, top-ranking open-source family — strong retrieval at zero licensing cost.</p></div>
+          <div class="tool-item"><span class="tool-chip">Nomic Embed</span><p>Open, reproducible, full training-data transparency — for regulated environments needing auditability.</p></div>
+        </div>
+
+        <div class="cat-label">vector databases</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Pinecone</span><p>Fully managed, serverless — production-grade search without managing infra.</p></div>
+          <div class="tool-item"><span class="tool-chip">Qdrant</span><p>Rust-based, rich metadata filtering, self-hosted or managed.</p></div>
+          <div class="tool-item"><span class="tool-chip">Weaviate</span><p>Open-source with built-in hybrid search (vector + keyword) out of the box.</p></div>
+          <div class="tool-item"><span class="tool-chip">Milvus</span><p>Distributed, built for billion-scale vector workloads at enterprise scale.</p></div>
+          <div class="tool-item"><span class="tool-chip">Chroma</span><p>Lightweight, embedded, in-process — ideal for prototyping and small apps.</p></div>
+          <div class="tool-item"><span class="tool-chip">pgvector</span><p>Vector search inside Postgres — for teams already running it who want one less moving part.</p></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 4</span><h3 class="step-title">Knowledge Graph Construction (GraphRAG)</h3></div>
+        <p class="step-intro">For complex domain tasks, unstructured data gets linked into entity-relationship graphs to support multi-hop reasoning.</p>
+
+        <div class="cat-label">graph databases</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Neo4j</span><p>The leading native graph database — for multi-hop reasoning across connected entities plain vector search can't answer.</p></div>
+          <div class="tool-item"><span class="tool-chip">Memgraph</span><p>In-memory, Cypher-compatible — real-time graph updates for fraud detection, live relationship tracking.</p></div>
+        </div>
+
+        <div class="cat-label">data warehouses &amp; lakes</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Snowflake / Databricks / Delta Lake / BigQuery</span><p>Source-of-truth platforms feeding the RAG pipeline when enterprise data already lives in a lake/warehouse.</p></div>
+        </div>
+      </div>
+
+      <div class="phase-end"><span>Next</span><span class="next">Phase 03 → Offline Fine-Tuning &amp; Model Adaptation</span></div>
+    </section>
+
+    <!-- ============ PHASE 3 ============ -->
+    <section class="phase" id="phase-3">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 03 / 07 · offline</span></div>
+      <h1 class="title">Offline Fine-Tuning &amp; Model Adaptation</h1>
+      <p class="lede">Executed periodically when base foundation models need domain-specific knowledge or behavioral alignment.</p>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 5</span><h3 class="step-title">Parameter Optimization &amp; Alignment</h3></div>
+        <p class="step-intro">Open-source models are fine-tuned using domain datasets, adapter techniques (LoRA), or reinforcement learning to follow company-specific patterns.</p>
+
+        <div class="cat-label">model repositories</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Hugging Face</span><p>The largest hub for open-source weights, datasets, and training/inference libraries — source models or host your own checkpoints.</p></div>
+        </div>
+
+        <div class="cat-label">fine-tuning engines &amp; frameworks</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">PEFT / LoRA</span><p>Freezes most weights, trains small adapter matrices — drastically cuts fine-tuning compute/memory cost.</p></div>
+          <div class="tool-item"><span class="tool-chip">Unsloth</span><p>Optimized LoRA/QLoRA training (2–5x faster), lower VRAM — for limited GPU budgets and faster iteration.</p></div>
+          <div class="tool-item"><span class="tool-chip">Axolotl</span><p>YAML-config-driven wrapper standardizing fine-tuning recipes across architectures — repeatable, no custom loops.</p></div>
+          <div class="tool-item"><span class="tool-chip">TRL</span><p>Hugging Face's RLHF library (SFT, reward modeling, PPO, DPO) — aligning tone/behavior/safety via preference optimization.</p></div>
+          <div class="tool-item"><span class="tool-chip">LLaMA-Factory</span><p>No-code web UI to fine-tune 100+ open models — minimal ML-engineering overhead.</p></div>
+        </div>
+      </div>
+
+      <div class="phase-end"><span>Next</span><span class="next">Phase 04 → Runtime Request Entry &amp; Security</span></div>
+    </section>
+
+    <!-- ============ PHASE 4 ============ -->
+    <section class="phase" id="phase-4">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 04 / 07 · runtime</span></div>
+      <h1 class="title">Runtime Request Entry &amp; Security</h1>
+      <p class="lede">Triggers the moment a user submits a query via the application UI or API.</p>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 6</span><h3 class="step-title">Input Security, DLP &amp; Anonymization</h3></div>
+        <p class="step-intro">The incoming prompt is inspected to strip out PII and blocked if malicious prompt injections are detected.</p>
+
+        <div class="cat-label">data privacy &amp; DLP</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Presidio</span><p>Microsoft's SDK — detects and anonymizes PII (names, emails, cards) before it hits the model or logs.</p></div>
+          <div class="tool-item"><span class="tool-chip">DLP Gateways</span><p>Architectural pattern — a centralized data-loss-prevention checkpoint for all AI traffic, for compliance requirements.</p></div>
+        </div>
+
+        <div class="cat-label">application firewalls &amp; ingestion security</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Rebuff</span><p>Multi-layered open-source defense (heuristics, LLM detection, canary tokens) built specifically for prompt injection.</p></div>
+          <div class="tool-item"><span class="tool-chip">Lakera Guard</span><p>Commercial real-time API screening for injection, jailbreaks, PII leakage, and toxicity — managed, continuously updated.</p></div>
+          <div class="tool-item"><span class="tool-chip">Palo Alto AI Guard</span><p>Enterprise firewall extending traditional threat-intel to AI traffic, for teams already on Palo Alto's stack.</p></div>
+        </div>
+      </div>
+
+      <div class="phase-end"><span>Next</span><span class="next">Phase 05 → Caching &amp; Latency Optimization</span></div>
+    </section>
+
+    <!-- ============ PHASE 5 ============ -->
+    <section class="phase" id="phase-5">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 05 / 07 · runtime</span></div>
+      <h1 class="title">Caching &amp; Latency Optimization</h1>
+      <p class="lede">Reduces response times and cuts API costs for repetitive or similar queries.</p>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 7</span><h3 class="step-title">Semantic &amp; KV Caching Check</h3></div>
+        <p class="step-intro">The system checks whether an exact or semantically identical query has already been answered, bypassing inference if cached.</p>
+
+        <div class="cat-label">semantic caching frameworks &amp; tools</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">GPTCache</span><p>Caches responses by embedding similarity, not exact string match — paraphrased questions still hit the cache.</p></div>
+          <div class="tool-item"><span class="tool-chip">Redis</span><p>In-memory key-value store backing exact and semantic caches — sub-millisecond lookups at high throughput.</p></div>
+        </div>
+
+        <div class="cat-label">inference engine caching strategies</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">PagedAttention / RadixAttention</span><p>Low-level KV-cache management — PagedAttention (vLLM) avoids memory fragmentation, RadixAttention (SGLang) reuses shared prefixes.</p></div>
+        </div>
+      </div>
+
+      <div class="phase-end"><span>Next</span><span class="next">Phase 06 → Query Execution, Retrieval &amp; Orchestration</span></div>
+    </section>
+
+    <!-- ============ PHASE 6 ============ -->
+    <section class="phase" id="phase-6">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 06 / 07 · runtime</span></div>
+      <h1 class="title">Query Execution, Retrieval &amp; Orchestration</h1>
+      <p class="lede">On a cache miss, the orchestrator retrieves context, builds the prompt, and coordinates model interactions.</p>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 8</span><h3 class="step-title">Context Retrieval &amp; Reranking</h3></div>
+        <p class="step-intro">The prompt queries the Vector DB and Knowledge Graph for top matching chunks; a reranking model re-scores the retrieved context for relevance.</p>
+        <div class="cat-label">reranking models</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Cohere Rerank</span><p>Managed cross-encoder — precise final ranking after a broad vector-search pass.</p></div>
+          <div class="tool-item"><span class="tool-chip">BGE Reranker</span><p>Open-source cross-encoder, self-hostable for cost or data-residency reasons.</p></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 9</span><h3 class="step-title">Agent Orchestration &amp; Protocol Translation</h3></div>
+        <p class="step-intro">The orchestrator coordinates system state, conversational history, retrieved context, and tool definitions into a unified execution step.</p>
+
+        <div class="cat-label">orchestration frameworks</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">LangChain</span><p>Broad SDK with standardized abstractions — large ecosystem, best for simpler linear control flow.</p></div>
+          <div class="tool-item"><span class="tool-chip">LangGraph</span><p>State-machine extension purpose-built for agentic loops — branching, cycles, persistent state.</p></div>
+          <div class="tool-item"><span class="tool-chip">LlamaIndex</span><p>Specialized in data ingestion/indexing/retrieval — best when the core challenge is data connections, not complex orchestration.</p></div>
+          <div class="tool-item"><span class="tool-chip">CrewAI</span><p>Role-based "crews" of collaborating agents — for workflows that decompose into specialized personas.</p></div>
+          <div class="tool-item"><span class="tool-chip">AutoGen</span><p>Microsoft's conversation-driven multi-agent framework, often with human-in-the-loop steps.</p></div>
+          <div class="tool-item"><span class="tool-chip">Pydantic AI</span><p>Enforces strict typed inputs/outputs — critical when type safety matters for production reliability.</p></div>
+        </div>
+
+        <div class="cat-label">short-term conversational memory</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Redis / Memcached</span><p>Fast in-memory stores holding recent turns/session state for low-latency context during a live interaction.</p></div>
+        </div>
+
+        <div class="cat-label">tool &amp; context protocols</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">MCP</span><p>Anthropic-originated open standard — a uniform way for apps to discover and call external tools/data sources.</p></div>
+          <div class="tool-item"><span class="tool-chip">Function Calling</span><p>Model-native structured call (name + arguments) matching a predefined schema for reliable app invocation.</p></div>
+          <div class="tool-item"><span class="tool-chip">A2A</span><p>Google-backed protocol letting independently-built agents discover capabilities and communicate directly.</p></div>
+          <div class="tool-item"><span class="tool-chip">Computer Use</span><p>Agent perceives a screen and controls mouse/keyboard for software with no API.</p></div>
+          <div class="tool-item"><span class="tool-chip">Composio</span><p>Pre-built, authenticated integrations (Gmail, Slack, GitHub) — fast access without building each connector.</p></div>
+        </div>
+
+        <div class="cat-label">agentic design patterns</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">ReAct</span><p>Interleaves reasoning and tool-action steps — general tool-using reasoning tasks.</p></div>
+          <div class="tool-item"><span class="tool-chip">Reflexion</span><p>The agent critiques and revises its own past attempts — iterative self-correction.</p></div>
+          <div class="tool-item"><span class="tool-chip">Plan-and-Solve</span><p>Decomposes a goal into a plan before executing — complex multi-step goals.</p></div>
+          <div class="tool-item"><span class="tool-chip">Human-in-the-Loop</span><p>Inserts a manual approval checkpoint — high-stakes actions needing sign-off before execution.</p></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 10</span><h3 class="step-title">Model Inference &amp; Serving</h3></div>
+        <p class="step-intro">The assembled prompt is submitted to the model execution layer — cloud API or self-hosted GPU cluster.</p>
+
+        <div class="cat-label">proprietary foundation models</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">GPT-5.x</span><p>OpenAI's flagship — general-purpose high-capability reasoning via managed API.</p></div>
+          <div class="tool-item"><span class="tool-chip">Claude Opus 5</span><p>Anthropic's top-tier model, tuned for reasoning, coding, and agentic tool-use.</p></div>
+          <div class="tool-item"><span class="tool-chip">Gemini 3.x</span><p>Google's multimodal flagship, integrated with Google Cloud/Vertex AI.</p></div>
+        </div>
+
+        <div class="cat-label">open-source foundation models</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Llama 4</span><p>Meta's open-weight family — full control, on-prem deployment, or a fine-tuning base.</p></div>
+          <div class="tool-item"><span class="tool-chip">DeepSeek V4</span><p>Strong performance-per-cost, often mixture-of-experts — near-frontier at lower serving cost.</p></div>
+          <div class="tool-item"><span class="tool-chip">Qwen 3.x</span><p>Alibaba's open-weight family — strong multilingual (Chinese/English) and coding performance.</p></div>
+        </div>
+
+        <div class="cat-label">inference &amp; serving engines</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">vLLM</span><p>High-throughput serving via PagedAttention — self-hosting open-weight models at production throughput.</p></div>
+          <div class="tool-item"><span class="tool-chip">Ollama</span><p>Simple local LLM runner — prototyping, privacy-sensitive single-machine inference.</p></div>
+          <div class="tool-item"><span class="tool-chip">llama.cpp</span><p>Quantized C++ engine — limited/edge hardware without a dedicated GPU.</p></div>
+          <div class="tool-item"><span class="tool-chip">Groq</span><p>Custom LPU hardware — ultra-low-latency generation for real-time voice agents.</p></div>
+          <div class="tool-item"><span class="tool-chip">AWS Bedrock</span><p>Managed multi-provider access with enterprise compliance — natural fit for an AWS-heavy stack.</p></div>
+          <div class="tool-item"><span class="tool-chip">Google Vertex AI</span><p>End-to-end managed platform for foundation-model access plus custom ML on GCP.</p></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 11</span><h3 class="step-title">Prompt Output &amp; Schema Enforcement</h3></div>
+        <p class="step-intro">Raw generated output is parsed and strictly coerced into valid JSON, typed structures, or UI components.</p>
+        <div class="cat-label">output control engines &amp; libraries</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">DSPy</span><p>Treats prompts as optimizable programs — tunes wording/examples against a metric instead of hand-tuning.</p></div>
+          <div class="tool-item"><span class="tool-chip">Instructor</span><p>Wraps calls with Pydantic models, auto-retries until output validates — minimal boilerplate for typed output.</p></div>
+          <div class="tool-item"><span class="tool-chip">Outlines</span><p>Constrains token generation itself via grammars/regex/schema — hard format guarantees at generation time.</p></div>
+          <div class="tool-item"><span class="tool-chip">Guidance</span><p>Interleaves control logic with generation — fine-grained control filling specific template slots.</p></div>
+          <div class="tool-item"><span class="tool-chip">BAML</span><p>DSL/compiler for typed LLM functions compiling to type-safe client code across languages.</p></div>
+          <div class="tool-item"><span class="tool-chip">Native Structured Outputs</span><p>Provider's built-in JSON-mode feature — no extra validation tooling needed.</p></div>
+        </div>
+      </div>
+
+      <div class="phase-end"><span>Next</span><span class="next">Phase 07 → Post-Execution, Safety &amp; Observability</span></div>
+    </section>
+
+    <!-- ============ PHASE 7 ============ -->
+    <section class="phase" id="phase-7">
+      <div class="eyebrow-row"><span class="phase-ghost">Phase 07 / 07 · runtime</span></div>
+      <h1 class="title">Post-Execution, Safety &amp; Observability</h1>
+      <p class="lede">Runs concurrently with returning the response to the end user.</p>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 12</span><h3 class="step-title">Output Safety Guardrails</h3></div>
+        <p class="step-intro">The generated response passes a final check to verify factual grounding, catch hallucinations, and block toxic or off-topic content.</p>
+        <div class="cat-label">guardrail engines &amp; models</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">NeMo Guardrails</span><p>NVIDIA's programmable "rails" — topical, safety, factuality — constraining what a bot can say or do.</p></div>
+          <div class="tool-item"><span class="tool-chip">Guardrails AI</span><p>Python framework validating and auto-correcting output against declarative "guards" (no PII, valid format).</p></div>
+          <div class="tool-item"><span class="tool-chip">Llama Guard</span><p>Meta's open-weight moderation classifier — self-hostable unsafe-content detection.</p></div>
+          <div class="tool-item"><span class="tool-chip">Robust Intelligence</span><p>Enterprise platform (now Cisco) for automated AI red-teaming and continuous testing.</p></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">step 13</span><h3 class="step-title">Tracing, Logging &amp; Evaluation</h3></div>
+        <p class="step-intro">The full request-response lifecycle — tokens, latency per step, retrieval quality, total cost — is logged for continuous evaluation and MLOps metrics.</p>
+
+        <div class="cat-label">MLOps &amp; observability platforms</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">LangSmith</span><p>LangChain's managed tracing/eval platform — tight integration when the stack already uses LangChain/LangGraph.</p></div>
+          <div class="tool-item"><span class="tool-chip">Langfuse</span><p>Open-source, self-hostable, framework-agnostic — for data-residency or cost-driven tracing needs.</p></div>
+          <div class="tool-item"><span class="tool-chip">Arize Phoenix</span><p>Focused on embedding drift analysis alongside tracing and eval dashboards.</p></div>
+        </div>
+
+        <div class="cat-label">automated evaluation frameworks</div>
+        <div class="tool-list">
+          <div class="tool-item"><span class="tool-chip">Ragas</span><p>RAG-specific metrics — faithfulness, answer relevancy, context precision/recall — without hand-labeled ground truth.</p></div>
+          <div class="tool-item"><span class="tool-chip">DeepEval</span><p>"pytest-like" unit testing for LLM outputs — hallucination, bias, toxicity — wired into CI/CD.</p></div>
+        </div>
+      </div>
+
+      <div class="phase-end"><span>End</span><span class="next">devwithabhinav.in · Production Execution Lifecycle</span></div>
+
+      <div class="cta-block">
+        <div class="cta-eyebrow">get in touch</div>
+        <h3>Open to senior/lead remote roles</h3>
+        <p>Especially where enterprise .NET meets AI agent engineering — reach out, or see the Microsoft Agent Framework build this playbook draws on.</p>
+        <div class="cta-row">
+          <a class="primary" href="mailto:devwithabhinav@gmail.com">Email me</a>
+          <a class="secondary" href="https://github.com/devwithabhinav/AIEngineeringWithDotNet">View the MAF repo ↗</a>
+          <a class="secondary" href="https://devwithabhinav.in/profile/index.html">Back to full profile ↗</a>
+        </div>
+      </div>
+    </section>
+
+    </div>
+  </main>
+</div>
+
+<footer class="pagefoot">devwithabhinav.in · The Complete Production Execution Lifecycle</footer>
+
+<script>
+(function(){
+  try {
+    var links = Array.prototype.slice.call(document.querySelectorAll('.phase-link'));
+    var sections = links.map(function(l){ return document.getElementById(l.dataset.target) || document.getElementById(l.dataset.target + 'b'); });
+    function setActive(id){
+      links.forEach(function(l){ l.classList.toggle('active', l.dataset.target === id || l.dataset.target + 'b' === id); });
+    }
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){ if (entry.isIntersecting) setActive(entry.target.id); });
+      }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+      sections.forEach(function(s){ if (s) io.observe(s); });
+    }
+    setActive('phase-1');
+  } catch (e) { /* no-op */ }
+})();
+</script>
+
+</body>
+</html>
